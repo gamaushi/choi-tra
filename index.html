@@ -25,7 +25,14 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
 .pill.ph{background:var(--accent);color:#101318}
 #btnGear{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
 #btnGear svg{width:22px;height:22px;fill:#fff}
-.bar{height:6px;background:#2b333e}
+.bar{position:relative;height:6px;background:#2b333e;transition:height .15s}
+#seek{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);width:100%;height:36px;margin:0;opacity:0;pointer-events:none;-webkit-appearance:none;appearance:none;background:transparent}
+.seekable .bar{height:12px}
+.seekable #seek{opacity:1;pointer-events:auto}
+#seek::-webkit-slider-runnable-track{height:36px;background:transparent}
+#seek::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:5px;border-radius:50%;background:#fff;border:4px solid var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.5)}
+#seek::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:4px solid var(--accent)}
+#seek::-moz-range-track{background:transparent}
 .bar i{display:block;height:100%;width:0;background:var(--accent)}
 /* 情報エリア */
 .info{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:8px 16px;min-height:0;text-align:center}
@@ -147,7 +154,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <div class="figwrap"><svg id="fig" viewBox="0 0 200 112"></svg><video id="vid" muted loop playsinline preload="auto"></video></div>
     <div class="ov"><span class="pill" id="count">1/6</span><span class="pill ph" id="phase">スタート待ち</span></div>
     <button id="btnGear" aria-label="設定"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L14.9 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.4 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.9h4l.4-2.9c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM12.9 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></button>
-    <div class="bar"><i id="bar"></i></div>
+    <div class="bar"><i id="bar"></i><input type="range" id="seek" min="0" max="1000" value="0" aria-label="時間を調整"></div>
   </div>
   <div class="side">
     <div class="info">
@@ -178,6 +185,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <div class="row">セット数<select id="optSets"><option selected>1</option><option>2</option><option>3</option></select></div>
     <div class="row">セット間の休憩（秒）<select id="optSetRest"><option>30</option><option selected>60</option><option>90</option></select></div>
     <div class="row">音声ガイド<input type="checkbox" id="optVoice" checked></div>
+    <div class="row">運動中のフォーム説明<input type="checkbox" id="optNar" checked></div>
     <div class="row" id="voiceRow">声<select id="optVoiceName" style="max-width:62%"></select></div>
     <div class="row">話す速さ<select id="optRate"><option value="0.9">ゆっくり</option><option value="1.05" selected>ふつう</option><option value="1.2">はやめ</option></select></div>
     <div class="row" style="justify-content:flex-end"><button id="voiceTest" class="vtest">▶ 試しに聞く</button></div>
@@ -278,6 +286,8 @@ Object.assign(LIB,{
  cobra:{name:"コブラストレッチ", tip:"うつ伏せで手を胸の横につき、腕を伸ばして上体を起こす。お腹を伸ばしてゆっくり呼吸。腰が痛ければ浅めに。", sp:0.18,
   A:{...CB,torso:205}, B:{...CB,torso:213,neck:238}},
 });
+// 運動中のフォーム説明（ナレーション）
+const NAR={"plank": ["ひじは肩の真下に", "お尻をゆっくり上げて、下ろす", "下ろしたとき、腰を反らさない"], "revcrunch": ["脚を天井に向けて", "お尻を少し浮かせて、足を真上へ", "反動を使わず、ゆっくり下ろす"], "bicycle": ["手は頭の後ろに", "ひじと反対の膝を近づけて", "肩は床から浮かせたまま"], "legraise": ["両脚をそろえて", "腰を床に押しつけて", "下ろしきらずに止める"], "kneein": ["ひじをついて上体を起こす", "膝を胸に引き寄せて", "脚を伸ばす。足は床につけない"], "leghold": ["脚を少し浮かせてキープ", "お腹に力を入れて", "呼吸は止めないで"], "squat": ["足は肩幅に", "お尻を後ろに引いて", "膝はつま先と同じ向きに"], "stepjack": ["足を横に一歩", "手を頭の上へ", "リズムよく続けて"], "lunge": ["片足を大きく後ろへ", "前の膝を出しすぎない", "前足で床を押して戻る"], "climber": ["腕立ての姿勢で", "膝を交互に胸へ", "お尻を上げすぎない"], "row": ["膝を軽く曲げて前に倒す", "おへそに向けて引き上げる", "背中は丸めない"], "burpee": ["しゃがんで手を床に", "足を後ろへ伸ばす", "戻して立つ。跳ばなくてOK"], "plankhold": ["ひじは肩の真下に", "頭からかかとまで一直線", "お尻を上げすぎない"], "sideL": ["左ひじは肩の真下に", "体を一直線に", "きつければ膝をついてOK"], "sideR": ["右ひじは肩の真下に", "体を一直線に", "きつければ膝をついてOK"], "revplank": ["手は肩の真下に", "お尻を持ち上げる", "肩からかかとまで一直線"], "cobra": ["手を胸の横に", "ゆっくり上体を起こす", "お腹を伸ばして深呼吸"]};
 const MENUS={abs:{name:"腹筋2分",ids:["plank","revcrunch","bicycle","legraise","kneein","leghold"]},
  burn:{name:"脂肪燃焼2分",ids:["squat","stepjack","lunge","climber","row","burpee"]},
  core:{name:"体幹2分",ids:["plankhold","sideL","sideR","revplank","cobra"],work:24}};
@@ -408,7 +418,7 @@ function drawFig(f,ex,t){
 const $=id=>document.getElementById(id);
 let per=[];
 function applyMenu(){if(!MENUS[menuKey]&&!curCustom())menuKey="abs";per=MENUS[menuKey]?lists[menuKey]:curCustom().items;EX=per.map(it=>LIB[it.id]);}
-const optIds=["optOrient","optRate","optPrep","optSets","optSetRest","optVoice","optBeep"];
+const optIds=["optNar","optOrient","optRate","optPrep","optSets","optSetRest","optVoice","optBeep"];
 function loadOpts(){try{const o=JSON.parse(localStorage.getItem("abs2min")||"{}");if(Array.isArray(o.per)&&o.per.length===6)lists.abs=o.per.map((x,i)=>({id:ABS_IDS[i],work:+x.work||20,rest:+x.rest||0}));
 const clean=l=>Array.isArray(l)&&l.length&&l.every(x=>LIB[x.id])?l.map(x=>({id:x.id,work:+x.work||20,rest:+x.rest||0})):null;
 // プリセットは種目と順番を固定し、保存されている時間・休憩だけ引き継ぐ
@@ -541,11 +551,20 @@ $("bkRestore").onclick=()=>{try{const o=JSON.parse($("bkText").value);if(!o||!Ar
 let lastShown=-1,lastNow=0,doneSec=0;
 // カウントダウン：運動は時間に応じてラスト3/5（40秒以上は「あと10秒」も）、準備・休憩は5または3
 function countN(p){if(p.type==="work")return p.dur<=15?3:5;return p.dur>=8?5:p.dur>=6?3:0}
+function narPlan(p){
+  if(p._nar)return p._nar;
+  const id=per[p.ex]&&per[p.ex].id,lines=NAR[id]||[],n=countN(p);
+  const end=p.dur>=40?p.dur-13:p.dur-n-3,out=[];
+  if(end>=3&&lines.length){const k=Math.min(lines.length,Math.floor((end-3)/4)+1);
+    for(let i=0;i<k;i++)out.push({at:Math.round(k>1?3+i*(end-3)/(k-1):3),text:lines[i]})}
+  return p._nar=out;
+}
 function cue(s){
   const p=phases[idx];if(!p||s<=0)return;
   const n=countN(p),voice=opt().voice&&"speechSynthesis" in window;
   if(!voice){if(s<=3)beep(880,.12);return}
   if(p.type==="work"&&p.dur>=40&&s===10){say("あと10秒");return}
+  if(p.type==="work"&&$("optNar").checked){const hit=narPlan(p).find(x=>x.at===p.dur-s);if(hit){say(hit.text);return}}
   if(s<=n&&s<p.dur)say(p.type==="work"&&s===n?`ラスト${n}`:String(s));
 }
 function tick(now){
@@ -581,6 +600,9 @@ function render(full){
   const s=Math.ceil(remain);
   $("sec").textContent=String(s).padStart(2,"0");
   $("bar").style.width=(finished?100:(1-remain/p.dur)*100)+"%";
+  const seekable=!running&&!finished&&phases.length>0;
+  $("app").classList.toggle("seekable",seekable);
+  if(seekable&&!seeking)$("seek").value=Math.round((1-remain/p.dur)*1000);
   if(!full)return;
   $("count").textContent=`${p.ex+1}/${EX.length}`;
   $("phase").style.display=running&&p.type==="work"&&!finished?"none":"";
@@ -677,6 +699,10 @@ async function applyOrient(fromUser){
 }
 $("optOrient").addEventListener("change",()=>applyOrient(true));
 $("btnStart").addEventListener("click",()=>{if($("optOrient").value!=="auto"&&!document.fullscreenElement)applyOrient(false)});
+// 一時停止中にバーで時間を進める・戻す
+let seeking=false;
+$("seek").addEventListener("input",e=>{if(running||finished)return;seeking=true;const p=phases[idx];
+  remain=Math.max(0.5,p.dur*(1-e.target.value/1000));lastShown=Math.ceil(remain);render(false);seeking=false});
 $("btnReset").onclick=()=>{running=false;keepAwake(false);try{speechSynthesis.cancel()}catch(e){}build()};
 const applyOpts=()=>{saveOpts();if(!running)build()};
 optIds.forEach(id=>$(id).addEventListener("change",applyOpts));
