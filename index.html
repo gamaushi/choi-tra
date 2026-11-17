@@ -23,8 +23,9 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
 .ov{position:absolute;top:8px;left:8px;display:flex;gap:6px;align-items:center;pointer-events:none}
 .pill{padding:3px 10px;border-radius:999px;font-size:13px;font-weight:800;background:rgba(0,0,0,.55);color:#fff}
 .pill.ph{background:var(--accent);color:#101318}
-#btnGear{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
-#btnGear svg{width:22px;height:22px;fill:#fff}
+#btnLog,#btnGear{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
+#btnLog{right:52px}
+#btnLog svg,#btnGear svg{width:22px;height:22px;fill:#fff}
 .bar{height:6px;background:#2b333e}
 .bar i{display:block;height:100%;width:0;background:var(--accent)}
 /* 情報エリア */
@@ -77,14 +78,38 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .exopt label{display:flex;align-items:center;gap:6px}
 .exopt select{font:inherit;font-size:15px;background:#2a313c;color:var(--text);border:0;border-radius:8px;padding:5px 6px}
 .exopt .dim{opacity:.6}
-.seg{display:flex;background:#12161c;border-radius:12px;padding:4px;gap:4px;margin:4px 0 6px}
-.seg button{flex:1;padding:10px 2px;border-radius:9px;font-weight:800;font-size:13.5px;white-space:nowrap;color:var(--sub)}
+.seg{display:flex;background:#12161c;border-radius:12px;padding:4px;gap:4px;margin:4px 0 6px;overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button.add{color:var(--work)}
+#cusRow input{flex:1;font:inherit;font-size:16px;background:#2a313c;color:var(--text);border:0;border-radius:8px;padding:8px 10px;margin-right:10px;min-width:0}
+.danger{color:#ff8787;font-weight:700;padding:8px 6px;white-space:nowrap}
+.seg button{flex:1 0 auto;padding:10px 12px;border-radius:9px;font-weight:800;font-size:13.5px;white-space:nowrap;color:var(--sub)}
 .seg button.on{background:var(--work);color:#101318}
 .mchip{font-size:14px;font-weight:700;color:var(--sub);background:#1c222b;border-radius:999px;padding:5px 14px;margin-bottom:6px}
 .ttl{display:flex;justify-content:space-between;align-items:center;gap:6px}
 .ed{display:flex;gap:4px}
 .ed button{width:32px;height:30px;border-radius:8px;background:#2a313c;font-size:15px}
 .ed button:disabled{opacity:.3}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:4px 0 12px}
+.stats div{background:#12161c;border-radius:10px;padding:8px 4px;text-align:center}
+.stats b{display:block;font-size:22px;color:var(--work)}
+.stats span{font-size:11.5px;color:var(--sub)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:12px}
+.cal .h{color:var(--sub);font-size:11px}
+.cal .d{padding:7px 0;border-radius:8px;background:#12161c;color:var(--sub)}
+.cal .d.x{background:var(--work);color:#101318;font-weight:800}
+.cal .d.t{outline:2px solid var(--work)}
+.cal .d.f{opacity:.25}
+.lday{font-size:13px;color:var(--sub);margin:12px 0 4px}
+.lrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.lrow .tm{color:var(--sub);font-variant-numeric:tabular-nums}
+.lrow .pl{flex:1}
+.lrow .du{color:var(--sub);font-size:13px}
+.lrow button{color:var(--sub);padding:2px 6px}
+.bk{display:flex;align-items:center;gap:10px;margin:8px 0}
+.bk button{background:#2a313c;border-radius:10px;padding:10px 14px;font-weight:700}
+.bk span{font-size:13px;color:var(--done)}
+#bkText{width:100%;height:70px;background:#12161c;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px}
 .note{font-size:12.5px;color:var(--sub);line-height:1.6;margin-top:14px}
 </style>
 </head>
@@ -93,6 +118,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
   <div class="media">
     <div class="figwrap"><svg id="fig" viewBox="0 0 200 112"></svg><video id="vid" muted loop playsinline preload="auto"></video></div>
     <div class="ov"><span class="pill" id="count">1/6</span><span class="pill ph" id="phase">スタート待ち</span></div>
+    <button id="btnLog" aria-label="記録"><svg viewBox="0 0 24 24"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v11H5zm2 2v2h2v-2zm4 0v2h2v-2zm4 0v2h2v-2zm-8 4v2h2v-2zm4 0v2h2v-2z"/></svg></button>
     <button id="btnGear" aria-label="設定"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L14.9 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.4 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.9h4l.4-2.9c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM12.9 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></button>
     <div class="bar"><i id="bar"></i></div>
   </div>
@@ -114,7 +140,8 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 <div class="sheet" id="sheet">
   <div class="panel">
     <div class="ph2"><b>設定</b><button id="btnClose">閉じる</button></div>
-    <div class="seg" id="seg"><button data-m="abs">腹筋2分</button><button data-m="burn">脂肪燃焼2分</button><button data-m="core">体幹2分</button><button data-m="custom">個別</button></div>
+    <div class="seg" id="seg"></div>
+    <div class="row" id="cusRow"><input id="cusName" maxlength="12" aria-label="プラン名"><button id="cusDel" class="danger">削除</button></div>
     <div class="row">全種目の時間をまとめて変更<select id="optWork"></select></div>
     <div class="row">全種目の休憩をまとめて変更<select id="optRest"></select></div>
     <div class="row">開始前の準備（秒）<select id="optPrep"><option>3</option><option selected>5</option><option>10</option></select></div>
@@ -127,6 +154,20 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <ol class="menu" id="menu"></ol>
     <div class="row" id="addRow"><select id="addSel" style="width:100%"></select></div>
     <p class="note">設定はこのブラウザに保存されます。スマホを横向きにすると動画が大きく表示されます。<br>腰に痛みが出たら中止してください。レッグレイズ系で腰が浮く場合は、膝を曲げるか脚を高めの位置で止めると負担が減ります。</p>
+  </div>
+</div>
+<div class="sheet" id="logSheet">
+  <div class="panel">
+    <div class="ph2"><b>記録</b><button id="logClose">閉じる</button></div>
+    <div class="stats" id="stats"></div>
+    <div class="cal" id="cal"></div>
+    <h2>履歴</h2>
+    <div id="logList"></div>
+    <h2>バックアップ</h2>
+    <p class="note" style="margin-top:0">記録と設定はこのスマホのブラウザにだけ保存されます。機種変更やブラウザのデータ消去に備えて、ときどきコピーしてメモ帳などに保存してください。</p>
+    <div class="bk"><button id="bkCopy">記録と設定をコピー</button><span id="bkMsg"></span></div>
+    <textarea id="bkText" placeholder="コピーしておいた文字をここに貼り付けて「復元」"></textarea>
+    <div class="bk"><button id="bkRestore">復元</button></div>
   </div>
 </div>
 <p id="tip" hidden></p>
@@ -192,11 +233,16 @@ Object.assign(LIB,{
 });
 const MENUS={abs:{name:"腹筋2分",ids:["plank","revcrunch","bicycle","legraise","kneein","leghold"]},
  burn:{name:"脂肪燃焼2分",ids:["squat","stepjack","lunge","climber","row","burpee"]},
- core:{name:"体幹2分",ids:["plankhold","revplank","sideL","sideR","cobra"],work:24},
- custom:{name:"個別",ids:["squat","plank","climber","legraise"]}};
+ core:{name:"体幹2分",ids:["plankhold","sideL","sideR","revplank","cobra"],work:24}};
+const CUSTOM_DEFAULT=["squat","plank","climber","legraise"];
 const ABS_IDS=MENUS.abs.ids, BURN_IDS=MENUS.burn.ids, CORE_IDS=MENUS.core.ids;
 let menuKey="abs";
 let lists={};for(const k in MENUS)lists[k]=MENUS[k].ids.map(id=>({id,work:MENUS[k].work||20,rest:0}));
+// 個別プラン（複数）: {key:"c1",name:"個別1",items:[{id,work,rest}]}
+let customs=[{key:"c1",name:"個別1",items:CUSTOM_DEFAULT.map(id=>({id,work:20,rest:0}))}];
+const isCustom=k=>k[0]==="c"&&!MENUS[k];
+const curCustom=()=>customs.find(c=>c.key===menuKey);
+const menuName=k=>MENUS[k]?MENUS[k].name:(customs.find(c=>c.key===k)||{}).name||"";
 let EX=[];
 
 // ---- 人体モデル描画 ----
@@ -314,12 +360,18 @@ function drawFig(f,ex,t){
 // ---- 設定 ----
 const $=id=>document.getElementById(id);
 let per=[];
-function applyMenu(){per=lists[menuKey];EX=per.map(it=>LIB[it.id]);}
+function applyMenu(){if(!MENUS[menuKey]&&!curCustom())menuKey="abs";per=MENUS[menuKey]?lists[menuKey]:curCustom().items;EX=per.map(it=>LIB[it.id]);}
 const optIds=["optPrep","optSets","optSetRest","optVoice","optBeep"];
 function loadOpts(){try{const o=JSON.parse(localStorage.getItem("abs2min")||"{}");if(Array.isArray(o.per)&&o.per.length===6)lists.abs=o.per.map((x,i)=>({id:ABS_IDS[i],work:+x.work||20,rest:+x.rest||0}));
-if(o.lists)for(const k in MENUS){const l=o.lists[k];if(Array.isArray(l)&&l.length&&l.every(x=>LIB[x.id]))lists[k]=l.map(x=>({id:x.id,work:+x.work||20,rest:+x.rest||0}))}
-if(MENUS[o.menu])menuKey=o.menu;optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
-function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.lists=lists;o.menu=menuKey;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
+const clean=l=>Array.isArray(l)&&l.length&&l.every(x=>LIB[x.id])?l.map(x=>({id:x.id,work:+x.work||20,rest:+x.rest||0})):null;
+// プリセットは種目と順番を固定し、保存されている時間・休憩だけ引き継ぐ
+if(o.lists)for(const k in MENUS){const l=clean(o.lists[k]);if(!l)continue;const pool=[...l];
+  lists[k]=MENUS[k].ids.map(id=>{const j=pool.findIndex(x=>x.id===id);return j>=0?pool.splice(j,1)[0]:{id,work:MENUS[k].work||20,rest:0}})}
+if(Array.isArray(o.customs)){const c=o.customs.map(c=>({key:String(c.key),name:String(c.name||"個別"),items:clean(c.items)})).filter(c=>c.items&&isCustom(c.key));if(c.length)customs=c}
+else if(o.lists&&clean(o.lists.custom))customs[0].items=clean(o.lists.custom);
+if(o.menu==="custom")o.menu="c1";
+if(MENUS[o.menu]||customs.some(c=>c.key===o.menu))menuKey=o.menu;optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
+function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.lists=lists;o.customs=customs;o.menu=menuKey;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
 const opt=()=>({prep:+$("optPrep").value,sets:+$("optSets").value,setRest:+$("optSetRest").value,voice:$("optVoice").checked,beep:$("optBeep").checked});
 
 // ---- フェーズ構築 ----
@@ -334,7 +386,7 @@ function build(){
       if(last&&s<o.sets)phases.push({type:"rest",dur:o.setRest,ex:0,set:s+1,setBreak:true});
     });
   }
-  idx=0;remain=phases[0].dur;finished=false;running=false;
+  idx=0;remain=phases[0].dur;finished=false;running=false;doneSec=0;recorded=false;
   const total=phases.reduce((a,p)=>a+p.dur,0)-o.prep;
   $("total").textContent=`合計 約${Math.floor(total/60)}分${total%60?total%60+"秒":""}（${o.sets}セット）`;
   render(true);
@@ -373,10 +425,57 @@ function nextPhase(){
 function finish(){
   running=false;finished=true;idx=phases.length-1;remain=0;
   beep(1320,.2);setTimeout(()=>beep(1760,.4),220);
-  say("お疲れさまでした");keepAwake(false);render(true);
+  say("お疲れさまでした");keepAwake(false);
+  const planned=phases.filter(p=>p.type==="work").reduce((a,p)=>a+p.dur,0);
+  recorded=doneSec>=planned*0.5;
+  if(recorded)addLog({t:Date.now(),plan:menuName(menuKey),sec:Math.round(doneSec),sets:opt().sets});
+  render(true);
 }
-let lastShown=-1;
+// ---- 記録 ----
+let recorded=false;
+const LOGKEY="abs2min_log";
+function getLog(){try{const l=JSON.parse(localStorage.getItem(LOGKEY)||"[]");return Array.isArray(l)?l:[]}catch(e){return[]}}
+function setLog(l){try{localStorage.setItem(LOGKEY,JSON.stringify(l))}catch(e){}}
+function addLog(r){const l=getLog();l.push(r);setLog(l)}
+const dkey=d=>`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+const WD="日月火水木金土";
+const fmtSec=s=>s>=60?`${Math.floor(s/60)}分${s%60?s%60+"秒":""}`:`${s}秒`;
+function renderLog(){
+  const l=getLog().sort((a,b)=>b.t-a.t),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const days=new Set(l.map(r=>dkey(new Date(r.t))));
+  const mon=new Date(today);mon.setDate(today.getDate()-((today.getDay()+6)%7));
+  const inWeek=l.filter(r=>r.t>=mon.getTime()),inMonth=l.filter(r=>{const d=new Date(r.t);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()});
+  let streak=0;const d=new Date(today);if(!days.has(dkey(d)))d.setDate(d.getDate()-1);while(days.has(dkey(d))){streak++;d.setDate(d.getDate()-1)}
+  const min=a=>Math.round(a.reduce((x,r)=>x+r.sec,0)/60);
+  $("stats").innerHTML=`<div><b>${inWeek.length}</b><span>今週の回数</span></div><div><b>${min(inWeek)}</b><span>今週の分数</span></div><div><b>${inMonth.length}</b><span>今月の回数</span></div><div><b>${streak}</b><span>連続日数</span></div>`;
+  // 直近5週間（月曜始まり）
+  const start=new Date(mon);start.setDate(mon.getDate()-28);
+  let h="月火水木金土日".split("").map(c=>`<div class="h">${c}</div>`).join("");
+  for(let i=0;i<35;i++){const x=new Date(start);x.setDate(start.getDate()+i);const k=dkey(x);
+    h+=`<div class="d${days.has(k)?" x":""}${k===dkey(today)?" t":""}${x>today?" f":""}">${x.getDate()===1?(x.getMonth()+1)+"/":""}${x.getDate()}</div>`}
+  $("cal").innerHTML=h;
+  let out="",last="";
+  l.forEach(r=>{const x=new Date(r.t),k=dkey(x);
+    if(k!==last){out+=`<div class="lday">${x.getMonth()+1}/${x.getDate()}（${WD[x.getDay()]}）</div>`;last=k}
+    out+=`<div class="lrow"><span class="tm">${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}</span><span class="pl">${esc(r.plan)}${r.sets>1?` ×${r.sets}セット`:""}</span><span class="du">${fmtSec(r.sec)}</span><button data-t="${r.t}" aria-label="削除">✕</button></div>`});
+  $("logList").innerHTML=out||'<p class="note">まだ記録はありません。メニューを最後までやると自動で記録されます。</p>';
+}
+$("btnLog").onclick=()=>{renderLog();$("logSheet").classList.add("open")};
+$("logClose").onclick=()=>$("logSheet").classList.remove("open");
+$("logSheet").onclick=e=>{if(e.target.id==="logSheet")$("logSheet").classList.remove("open")};
+$("logList").onclick=e=>{const b=e.target.closest("button[data-t]");if(!b)return;
+  if(b.dataset.arm!=="1"){b.dataset.arm="1";b.textContent="削除？";return}
+  setLog(getLog().filter(r=>r.t!==+b.dataset.t));renderLog()};
+$("bkCopy").onclick=async()=>{const txt=JSON.stringify({v:1,opts:JSON.parse(localStorage.getItem("abs2min")||"{}"),log:getLog()});
+  try{await navigator.clipboard.writeText(txt);$("bkMsg").textContent="コピーしました"}catch(e){$("bkText").value=txt;$("bkText").select();$("bkMsg").textContent="下の文字を長押しでコピーしてください"}};
+$("bkRestore").onclick=()=>{try{const o=JSON.parse($("bkText").value);if(!o||!Array.isArray(o.log))throw 0;
+  const ts=new Set(getLog().map(r=>r.t));setLog(getLog().concat(o.log.filter(r=>r&&r.t&&!ts.has(r.t))));
+  if(o.opts){localStorage.setItem("abs2min",JSON.stringify(o.opts));loadOpts();stopAll();menuInit();build()}
+  $("bkMsg").textContent="復元しました";$("bkText").value="";renderLog()}catch(e){$("bkMsg").textContent="読み取れませんでした"}};
+let lastShown=-1,lastNow=0,doneSec=0;
 function tick(now){
+  const dt=Math.min(.5,(now-lastNow)/1000);lastNow=now;
+  if(running&&phases[idx]&&phases[idx].type==="work")doneSec+=dt;
   if(running){
     const left=Math.max(0,(endAt-now)/1000);
     remain=left;
@@ -408,7 +507,7 @@ function render(full){
   $("bar").style.width=(finished?100:(1-remain/p.dur)*100)+"%";
   if(!full)return;
   $("count").textContent=`${p.ex+1}/${EX.length}`;
-  $("phase").textContent=finished?"完了":!running&&idx===0&&remain===p.dur?"スタート待ち":!running?"一時停止":p.type==="work"?(o.sets>1?`${p.set}セット目`:"運動中"):p.type==="rest"?"休憩":"準備";
+  $("phase").textContent=finished?(recorded?"記録しました":"完了"):!running&&idx===0&&remain===p.dur?"スタート待ち":!running?"一時停止":p.type==="work"?(o.sets>1?`${p.set}セット目`:"運動中"):p.type==="rest"?"休憩":"準備";
   $("name").textContent=finished?"お疲れさまでした！":ex.name;
   $("tip").textContent=finished?"もう一度やるときは「もう一度」を押してください。":ex.tip;
   // NEXT
@@ -442,9 +541,12 @@ function syncBulk(){
 }
 function menuInit(){
   applyMenu();
-  const cus=menuKey==="custom";
-  document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on",b.dataset.m===menuKey));
-  $("mchip").textContent=MENUS[menuKey].name+" ▾";
+  const cus=isCustom(menuKey);
+  $("seg").innerHTML=[...Object.keys(MENUS),...customs.map(c=>c.key)].map(k=>`<button data-m="${k}" class="${k===menuKey?"on":""}">${esc(menuName(k))}</button>`).join("")+'<button data-m="new" class="add">＋新規</button>';
+  const on=$("seg").querySelector(".on");if(on)on.scrollIntoView({inline:"nearest",block:"nearest"});
+  $("cusRow").style.display=cus?"":"none";
+  if(cus){$("cusName").value=curCustom().name;$("cusDel").textContent="削除";delArm=false}
+  $("mchip").textContent=menuName(menuKey)+" ▾";
   $("addRow").style.display=cus?"":"none";
   $("menu").innerHTML=EX.map((e,i)=>{
     const last=i===EX.length-1;
@@ -478,9 +580,18 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 const libOpts=(ids,label)=>`<optgroup label="${label}">${ids.map(id=>`<option value="${id}">${LIB[id].name}</option>`).join("")}</optgroup>`;
 $("addSel").innerHTML='<option value="">＋ 種目を追加…</option>'+libOpts(ABS_IDS,"腹筋")+libOpts(BURN_IDS,"脂肪燃焼")+libOpts(CORE_IDS,"体幹・ストレッチ");
 function stopAll(){running=false;keepAwake(false);try{speechSynthesis.cancel()}catch(e){}}
-$("seg").onclick=e=>{const m=e.target.dataset.m;if(!m||m===menuKey)return;stopAll();menuKey=m;menuInit();saveOpts();build()};
-$("addSel").onchange=e=>{const id=e.target.value;if(!id)return;lists.custom.push({id,work:20,rest:0});e.target.value="";stopAll();menuInit();saveOpts();build()};
-$("menu").addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(!b)return;const i=+b.dataset.i,l=lists.custom;
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let delArm=false;
+$("seg").onclick=e=>{const m=e.target.dataset.m;if(!m||m===menuKey)return;
+  if(m==="new"){let n=1;while(customs.some(c=>c.key==="c"+n||c.name==="個別"+n))n++;
+    customs.push({key:"c"+n,name:"個別"+n,items:CUSTOM_DEFAULT.map(id=>({id,work:20,rest:0}))});menuKey="c"+n}
+  else menuKey=m;
+  stopAll();menuInit();saveOpts();build()};
+$("cusName").onchange=e=>{const c=curCustom();if(!c)return;c.name=e.target.value.trim()||c.name;menuInit();saveOpts()};
+$("cusDel").onclick=()=>{if(!delArm){delArm=true;$("cusDel").textContent="もう一度押すと削除";return}
+  customs=customs.filter(c=>c.key!==menuKey);menuKey="abs";stopAll();menuInit();saveOpts();build()};
+$("addSel").onchange=e=>{const id=e.target.value;if(!id)return;per.push({id,work:20,rest:0});e.target.value="";stopAll();menuInit();saveOpts();build()};
+$("menu").addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(!b)return;const i=+b.dataset.i,l=per;
   if(b.dataset.act==="up"&&i>0)[l[i-1],l[i]]=[l[i],l[i-1]];
   else if(b.dataset.act==="down"&&i<l.length-1)[l[i+1],l[i]]=[l[i],l[i+1]];
   else if(b.dataset.act==="del"&&l.length>1)l.splice(i,1);
