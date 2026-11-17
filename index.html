@@ -110,6 +110,28 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .bk button{background:#2a313c;border-radius:10px;padding:10px 14px;font-weight:700}
 .bk span{font-size:13px;color:var(--done)}
 #bkText{width:100%;height:70px;background:#12161c;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px}
+.addbtn{width:100%;margin:10px 0;padding:14px;border-radius:12px;background:#2a313c;color:var(--work);font-weight:800;font-size:16px}
+#pick{z-index:20}
+.pcat{font-size:15px;font-weight:800;margin:14px 0 8px;color:var(--sub)}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pc{background:#12161c;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.pth{position:relative;aspect-ratio:16/9;background:#000}
+.pth svg,.pth video,.lth svg,.lth video,.pvm svg,.pvm video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.pc b{font-size:14px;padding:6px 8px 0}
+.pc span{font-size:11.5px;color:var(--sub);padding:2px 8px 6px;line-height:1.45;flex:1}
+.pc button{margin:0 8px 8px;padding:8px;border-radius:9px;background:#2a313c;color:var(--work);font-weight:800}
+.pc button.ok{color:var(--done)}
+.lth{position:relative;flex:none;width:76px;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background:#000;padding:0}
+.lth::after{content:"拡大";position:absolute;right:2px;bottom:2px;font-size:9.5px;background:rgba(0,0,0,.55);color:#fff;border-radius:4px;padding:0 3px}
+.pv{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:16px}
+.pv.open{display:flex}
+.pvbox{background:var(--card);border-radius:16px;overflow:hidden;width:100%;max-width:560px}
+.pvm{position:relative;aspect-ratio:16/9;background:#000}
+.pvbox b{display:block;font-size:20px;padding:12px 14px 0}
+.pvbox p{margin:6px 14px;color:var(--sub);font-size:14.5px;line-height:1.6}
+.pvb{display:flex;gap:10px;padding:10px 14px 14px}
+.pvb button{flex:1;padding:12px;border-radius:10px;background:#2a313c;font-weight:800}
+#pvAdd{color:var(--work)}
 .note{font-size:12.5px;color:var(--sub);line-height:1.6;margin-top:14px}
 </style>
 </head>
@@ -152,7 +174,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <div class="total" id="total"></div>
     <h2>種目ごとの時間と休憩</h2>
     <ol class="menu" id="menu"></ol>
-    <div class="row" id="addRow"><select id="addSel" style="width:100%"></select></div>
+    <div id="addRow"><button id="addBtn" class="addbtn">＋ 種目を追加（イラストで選ぶ）</button></div>
     <p class="note">設定はこのブラウザに保存されます。スマホを横向きにすると動画が大きく表示されます。<br>腰に痛みが出たら中止してください。レッグレイズ系で腰が浮く場合は、膝を曲げるか脚を高めの位置で止めると負担が減ります。</p>
   </div>
 </div>
@@ -168,6 +190,20 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <div class="bk"><button id="bkCopy">記録と設定をコピー</button><span id="bkMsg"></span></div>
     <textarea id="bkText" placeholder="コピーしておいた文字をここに貼り付けて「復元」"></textarea>
     <div class="bk"><button id="bkRestore">復元</button></div>
+  </div>
+</div>
+<div class="sheet" id="pick">
+  <div class="panel">
+    <div class="ph2"><b>種目を追加</b><button id="pickClose">閉じる</button></div>
+    <div id="pickBody"></div>
+  </div>
+</div>
+<div class="pv" id="pv">
+  <div class="pvbox">
+    <div class="pvm" id="pvMedia"></div>
+    <b id="pvName"></b>
+    <p id="pvTip"></p>
+    <div class="pvb"><button id="pvAdd">＋ 追加</button><button id="pvClose">閉じる</button></div>
   </div>
 </div>
 <p id="tip" hidden></p>
@@ -496,6 +532,7 @@ function animate(now){
   const moving=running&&p&&p.type==="work";
   const t=!moving?0:ex.K?now/1000*ex.sp:(1-Math.cos(now/1000*Math.PI*ex.sp))/2;
   drawFig(fig,ex,t);
+  for(const L of live)drawFig(L.f,L.ex,tFor(L.ex,now));
 }
 function render(full){
   const p=phases[idx];if(!p)return;
@@ -551,11 +588,20 @@ function menuInit(){
   $("menu").innerHTML=EX.map((e,i)=>{
     const last=i===EX.length-1;
     const ed=cus?`<div class="ed"><button data-act="up" data-i="${i}"${i===0?" disabled":""}>↑</button><button data-act="down" data-i="${i}"${last?" disabled":""}>↓</button><button data-act="del" data-i="${i}"${EX.length<2?" disabled":""}>✕</button></div>`:"";
-    return `<li><div class="no">${i+1}</div><div style="flex:1"><div class="ttl"><b>${e.name}</b>${ed}</div><span>${e.tip}</span>
+    return `<li><div class="no">${i+1}</div><div style="flex:1"><div class="ttl"><button class="lth" data-pv="${per[i].id}"></button><b style="flex:1">${e.name}</b>${ed}</div><span>${e.tip}</span>
       <div class="exopt"><label>時間<select data-i="${i}" data-k="work">${optHtml(WORK_OPTS,per[i].work)}</select></label>
       ${last?'<label class="dim">最後の種目</label>':`<label>このあと休憩<select data-i="${i}" data-k="rest">${optHtml(REST_OPTS,per[i].rest,"なし")}</select></label>`}</div></div></li>`}).join("");
+  $("menu").querySelectorAll(".lth").forEach(b=>mediaInto(b,LIB[b.dataset.pv],false));
   syncBulk();
 }
+// サムネ・ポップアップ用：動画があれば動画、無ければ人体モデル
+let live=[];
+function mediaInto(el,ex,anim){
+  if(ex.video){el.insertAdjacentHTML("beforeend",`<video src="${ex.video}" muted loop playsinline ${anim?"autoplay":'preload="metadata"'}></video>`);return}
+  const sv=document.createElementNS(NS,"svg");sv.setAttribute("viewBox","0 0 200 112");el.appendChild(sv);
+  const f=buildFig(sv);drawFig(f,ex,ex.K?0.25:0.6);if(anim)live.push({f,ex});
+}
+const tFor=(ex,now)=>ex.K?now/1000*ex.sp:(1-Math.cos(now/1000*Math.PI*ex.sp))/2;
 
 // ---- ボタン ----
 $("btnStart").onclick=()=>{
@@ -577,8 +623,6 @@ $("menu").addEventListener("change",e=>{const el=e.target;if(!el.dataset.k)retur
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&running)keepAwake(true)});
 
 // メニュー切替・個別メニューの編集
-const libOpts=(ids,label)=>`<optgroup label="${label}">${ids.map(id=>`<option value="${id}">${LIB[id].name}</option>`).join("")}</optgroup>`;
-$("addSel").innerHTML='<option value="">＋ 種目を追加…</option>'+libOpts(ABS_IDS,"腹筋")+libOpts(BURN_IDS,"脂肪燃焼")+libOpts(CORE_IDS,"体幹・ストレッチ");
 function stopAll(){running=false;keepAwake(false);try{speechSynthesis.cancel()}catch(e){}}
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let delArm=false;
@@ -590,7 +634,35 @@ $("seg").onclick=e=>{const m=e.target.dataset.m;if(!m||m===menuKey)return;
 $("cusName").onchange=e=>{const c=curCustom();if(!c)return;c.name=e.target.value.trim()||c.name;menuInit();saveOpts()};
 $("cusDel").onclick=()=>{if(!delArm){delArm=true;$("cusDel").textContent="もう一度押すと削除";return}
   customs=customs.filter(c=>c.key!==menuKey);menuKey="abs";stopAll();menuInit();saveOpts();build()};
-$("addSel").onchange=e=>{const id=e.target.value;if(!id)return;per.push({id,work:20,rest:0});e.target.value="";stopAll();menuInit();saveOpts();build()};
+// ---- 種目追加ポップアップ・拡大表示 ----
+const CATS=[["腹筋",ABS_IDS],["脂肪燃焼",BURN_IDS],["体幹・ストレッチ",CORE_IDS]];
+function addEx(id){per.push({id,work:20,rest:0});stopAll();menuInit();saveOpts();build()}
+function openPick(){
+  live=[];
+  $("pickBody").innerHTML=CATS.map(([c,ids])=>`<div class="pcat">${c}</div><div class="pgrid">${ids.map(id=>`<div class="pc"><div class="pth" data-pv="${id}"></div><b>${LIB[id].name}</b><span>${LIB[id].tip}</span><button data-add="${id}">＋ 追加</button></div>`).join("")}</div>`).join("");
+  $("pickBody").querySelectorAll(".pth").forEach(el=>mediaInto(el,LIB[el.dataset.pv],true));
+  $("pick").classList.add("open");
+}
+function closePick(){$("pick").classList.remove("open");$("pickBody").innerHTML="";live=[]}
+$("addBtn").onclick=openPick;
+$("pickClose").onclick=closePick;
+$("pick").onclick=e=>{if(e.target.id==="pick")return closePick();
+  const a=e.target.closest("button[data-add]");
+  if(a){addEx(a.dataset.add);a.textContent="✓ 追加しました（もう1つ追加）";a.classList.add("ok");return}
+  const t=e.target.closest(".pth");if(t)openPv(t.dataset.pv,true)};
+let pvId=null,pvLive=null;
+function openPv(id,canAdd){
+  pvId=id;const ex=LIB[id];$("pvMedia").innerHTML="";
+  const before=live.length;mediaInto($("pvMedia"),ex,true);pvLive=live.length>before?live[live.length-1]:null;
+  $("pvName").textContent=ex.name;$("pvTip").textContent=ex.tip;
+  $("pvAdd").style.display=canAdd&&isCustom(menuKey)?"":"none";$("pvAdd").textContent="＋ 追加";
+  $("pv").classList.add("open");
+}
+function closePv(){$("pv").classList.remove("open");$("pvMedia").innerHTML="";if(pvLive)live=live.filter(x=>x!==pvLive);pvLive=null}
+$("pvClose").onclick=closePv;
+$("pv").onclick=e=>{if(e.target.id==="pv")closePv()};
+$("pvAdd").onclick=()=>{addEx(pvId);$("pvAdd").textContent="✓ 追加済み"};
+$("menu").addEventListener("click",e=>{const b=e.target.closest(".lth");if(b)openPv(b.dataset.pv,false)});
 $("menu").addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(!b)return;const i=+b.dataset.i,l=per;
   if(b.dataset.act==="up"&&i>0)[l[i-1],l[i]]=[l[i],l[i-1]];
   else if(b.dataset.act==="down"&&i<l.length-1)[l[i+1],l[i]]=[l[i],l[i+1]];
