@@ -173,6 +173,8 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <div class="row">全種目の時間をまとめて変更<select id="optWork"></select></div>
     <div class="row">全種目の休憩をまとめて変更<select id="optRest"></select></div>
     <div class="row">開始前の準備（秒）<select id="optPrep"><option>5</option><option selected>10</option><option>15</option></select></div>
+    <div class="row">画面の向き<select id="optOrient"><option value="auto" selected>自動（スマホに合わせる）</option><option value="portrait">縦に固定</option><option value="landscape">横に固定</option></select></div>
+    <p class="note" id="orientMsg" style="margin:4px 0 0"></p>
     <div class="row">セット数<select id="optSets"><option selected>1</option><option>2</option><option>3</option></select></div>
     <div class="row">セット間の休憩（秒）<select id="optSetRest"><option>30</option><option selected>60</option><option>90</option></select></div>
     <div class="row">音声ガイド<input type="checkbox" id="optVoice" checked></div>
@@ -406,7 +408,7 @@ function drawFig(f,ex,t){
 const $=id=>document.getElementById(id);
 let per=[];
 function applyMenu(){if(!MENUS[menuKey]&&!curCustom())menuKey="abs";per=MENUS[menuKey]?lists[menuKey]:curCustom().items;EX=per.map(it=>LIB[it.id]);}
-const optIds=["optRate","optPrep","optSets","optSetRest","optVoice","optBeep"];
+const optIds=["optOrient","optRate","optPrep","optSets","optSetRest","optVoice","optBeep"];
 function loadOpts(){try{const o=JSON.parse(localStorage.getItem("abs2min")||"{}");if(Array.isArray(o.per)&&o.per.length===6)lists.abs=o.per.map((x,i)=>({id:ABS_IDS[i],work:+x.work||20,rest:+x.rest||0}));
 const clean=l=>Array.isArray(l)&&l.length&&l.every(x=>LIB[x.id])?l.map(x=>({id:x.id,work:+x.work||20,rest:+x.rest||0})):null;
 // プリセットは種目と順番を固定し、保存されている時間・休憩だけ引き継ぐ
@@ -663,6 +665,17 @@ $("btnPrev").onclick=()=>{
   render(true)};
 $("optVoiceName").onchange=()=>{voicePref=$("optVoiceName").value;saveOpts();$("voiceTest").click()};
 $("voiceTest").onclick=()=>{const was=$("optVoice").checked;$("optVoice").checked=true;say("スクワット、スタート。次はリバースランジです");$("optVoice").checked=was};
+// 画面の向き：固定は全画面表示にしてから行う（Android の Chrome / Brave など）
+async function applyOrient(fromUser){
+  const v=$("optOrient").value,so=screen.orientation;
+  try{
+    if(v==="auto"){if(so&&so.unlock)so.unlock();if(fromUser&&document.fullscreenElement)await document.exitFullscreen();$("orientMsg").textContent="";return}
+    if(!document.fullscreenElement&&document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen({navigationUI:"hide"});
+    await so.lock(v);$("orientMsg").textContent="全画面で固定しました。戻すときは「自動」にしてください。";
+  }catch(e){$("orientMsg").textContent="このブラウザでは向きを固定できませんでした。スマホの「自動回転」で切り替えてください。"}
+}
+$("optOrient").addEventListener("change",()=>applyOrient(true));
+$("btnStart").addEventListener("click",()=>{if($("optOrient").value!=="auto"&&!document.fullscreenElement)applyOrient(false)});
 $("btnReset").onclick=()=>{running=false;keepAwake(false);try{speechSynthesis.cancel()}catch(e){}build()};
 const applyOpts=()=>{saveOpts();if(!running)build()};
 optIds.forEach(id=>$(id).addEventListener("change",applyOpts));
