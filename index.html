@@ -294,9 +294,9 @@ const MENUS={abs:{name:"腹筋2分",ids:["plank","revcrunch","bicycle","legraise
 const CUSTOM_DEFAULT=["squat","plank","climber","legraise"];
 const ABS_IDS=MENUS.abs.ids, BURN_IDS=MENUS.burn.ids, CORE_IDS=MENUS.core.ids;
 let menuKey="abs";
-let lists={};for(const k in MENUS)lists[k]=MENUS[k].ids.map(id=>({id,work:MENUS[k].work||20,rest:0}));
+let lists={};for(const k in MENUS)lists[k]=MENUS[k].ids.map(id=>({id,work:MENUS[k].work||20,rest:5}));
 // 個別プラン（複数）: {key:"c1",name:"個別1",items:[{id,work,rest}]}
-let customs=[{key:"c1",name:"個別1",items:CUSTOM_DEFAULT.map(id=>({id,work:20,rest:0}))}];
+let customs=[{key:"c1",name:"個別1",items:CUSTOM_DEFAULT.map(id=>({id,work:20,rest:5}))}];
 const isCustom=k=>k[0]==="c"&&!MENUS[k];
 const curCustom=()=>customs.find(c=>c.key===menuKey);
 const menuName=k=>MENUS[k]?MENUS[k].name:(customs.find(c=>c.key===k)||{}).name||"";
@@ -423,12 +423,13 @@ function loadOpts(){try{const o=JSON.parse(localStorage.getItem("abs2min")||"{}"
 const clean=l=>Array.isArray(l)&&l.length&&l.every(x=>LIB[x.id])?l.map(x=>({id:x.id,work:+x.work||20,rest:+x.rest||0})):null;
 // プリセットは種目と順番を固定し、保存されている時間・休憩だけ引き継ぐ
 if(o.lists)for(const k in MENUS){const l=clean(o.lists[k]);if(!l)continue;const pool=[...l];
-  lists[k]=MENUS[k].ids.map(id=>{const j=pool.findIndex(x=>x.id===id);return j>=0?pool.splice(j,1)[0]:{id,work:MENUS[k].work||20,rest:0}})}
+  lists[k]=MENUS[k].ids.map(id=>{const j=pool.findIndex(x=>x.id===id);return j>=0?pool.splice(j,1)[0]:{id,work:MENUS[k].work||20,rest:5}})}
 if(Array.isArray(o.customs)){const c=o.customs.map(c=>({key:String(c.key),name:String(c.name||"個別"),items:clean(c.items)})).filter(c=>c.items&&isCustom(c.key));if(c.length)customs=c}
 else if(o.lists&&clean(o.lists.custom))customs[0].items=clean(o.lists.custom);
-if(o.menu==="custom")o.menu="c1";if(!o.cd&&(o.optPrep==="5"||o.optPrep==="3"))o.optPrep="10";if(o.voice){voicePref=o.voice;if(voices.some(v=>v.voiceURI===o.voice))$("optVoiceName").value=o.voice}
-if(MENUS[o.menu]||customs.some(c=>c.key===o.menu))menuKey=o.menu;optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
-function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.cd=1;o.lists=lists;o.customs=customs;o.menu=menuKey;o.voice=$("optVoiceName").value;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
+if(o.menu==="custom")o.menu="c1";
+const r5=l=>{if(!o.r5&&l.every(x=>x.rest===0))l.forEach(x=>x.rest=5)};if(!o.cd&&(o.optPrep==="5"||o.optPrep==="3"))o.optPrep="10";if(o.voice){voicePref=o.voice;if(voices.some(v=>v.voiceURI===o.voice))$("optVoiceName").value=o.voice}
+if(MENUS[o.menu]||customs.some(c=>c.key===o.menu))menuKey=o.menu;for(const k in lists)r5(lists[k]);customs.forEach(c=>r5(c.items));optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
+function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.cd=1;o.r5=1;o.lists=lists;o.customs=customs;o.menu=menuKey;o.voice=$("optVoiceName").value;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
 const opt=()=>({prep:+$("optPrep").value,sets:+$("optSets").value,setRest:+$("optSetRest").value,voice:$("optVoice").checked,beep:$("optBeep").checked});
 
 // ---- フェーズ構築 ----
@@ -487,7 +488,7 @@ function announce(){
   const p=phases[idx],o=opt(),ex=EX[p.ex];
   if(p.type==="prep")say(`準備してください。最初は${ex.name}`);
   else if(p.type==="work")say(o.sets>1&&p.ex===0?`${p.set}セット目。${ex.name}、スタート`:`${ex.name}、スタート`);
-  else say(p.setBreak?`休憩。次は${p.set}セット目`:`休憩。次は${ex.name}`);
+  else say(p.setBreak?`休憩。次は${p.set}セット目`:`次は${ex.name}`);
 }
 function nextPhase(){
   idx++;
@@ -550,7 +551,7 @@ $("bkRestore").onclick=()=>{try{const o=JSON.parse($("bkText").value);if(!o||!Ar
   $("bkMsg").textContent="復元しました";$("bkText").value="";renderLog()}catch(e){$("bkMsg").textContent="読み取れませんでした"}};
 let lastShown=-1,lastNow=0,doneSec=0;
 // カウントダウン：運動は時間に応じてラスト3/5（40秒以上は「あと10秒」も）、準備・休憩は5または3
-function countN(p){if(p.type==="work")return p.dur<=15?3:5;return p.dur>=8?5:p.dur>=6?3:0}
+function countN(p){if(p.type==="work")return p.dur<=15?3:5;return p.dur>=8?5:p.dur>=4?3:0}
 function narPlan(p){
   if(p._nar)return p._nar;
   const id=per[p.ex]&&per[p.ex].id,lines=NAR[id]||[],n=countN(p);
@@ -717,7 +718,7 @@ const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 let delArm=false;
 $("seg").onclick=e=>{const m=e.target.dataset.m;if(!m||m===menuKey)return;
   if(m==="new"){let n=1;while(customs.some(c=>c.key==="c"+n||c.name==="個別"+n))n++;
-    customs.push({key:"c"+n,name:"個別"+n,items:CUSTOM_DEFAULT.map(id=>({id,work:20,rest:0}))});menuKey="c"+n}
+    customs.push({key:"c"+n,name:"個別"+n,items:CUSTOM_DEFAULT.map(id=>({id,work:20,rest:5}))});menuKey="c"+n}
   else menuKey=m;
   stopAll();menuInit();saveOpts();build()};
 $("cusName").onchange=e=>{const c=curCustom();if(!c)return;c.name=e.target.value.trim()||c.name;menuInit();saveOpts()};
@@ -725,7 +726,7 @@ $("cusDel").onclick=()=>{if(!delArm){delArm=true;$("cusDel").textContent="もう
   customs=customs.filter(c=>c.key!==menuKey);menuKey="abs";stopAll();menuInit();saveOpts();build()};
 // ---- 種目追加ポップアップ・拡大表示 ----
 const CATS=[["腹筋",ABS_IDS],["脂肪燃焼",BURN_IDS],["体幹・ストレッチ",CORE_IDS]];
-function addEx(id){per.push({id,work:20,rest:0});stopAll();menuInit();saveOpts();build()}
+function addEx(id){per.push({id,work:20,rest:5});stopAll();menuInit();saveOpts();build()}
 function openPick(){
   live=[];
   $("pickBody").innerHTML=CATS.map(([c,ids])=>`<div class="pcat">${c}</div><div class="pgrid">${ids.map(id=>`<div class="pc"><div class="pth" data-pv="${id}"></div><b>${LIB[id].name}</b><span>${LIB[id].tip}</span><button data-add="${id}">＋ 追加</button></div>`).join("")}</div>`).join("");
