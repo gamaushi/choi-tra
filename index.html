@@ -39,7 +39,7 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
 .nfw>video{display:none}
 /* ボタン */
 .side{display:contents}
-.ctrl{display:flex;justify-content:center;align-items:center;gap:28px;padding:10px 0 18px;flex:none}
+.ctrl{display:flex;justify-content:center;align-items:center;gap:18px;padding:10px 0 18px;flex:none}
 .ctrl button{display:grid;place-items:center;border-radius:50%}
 .ctrl .s{width:60px;height:60px;background:#232a34}
 .ctrl .m{width:84px;height:84px;background:var(--accent)}
@@ -153,6 +153,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     </div>
     <div class="ctrl">
       <button class="s" id="btnReset" aria-label="リセット"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg></button>
+      <button class="s" id="btnPrev" aria-label="戻る"><svg viewBox="0 0 24 24"><path d="M19 5l-9 7 9 7zM5 5h3v14H5z"/></svg></button>
       <button class="m" id="btnStart" aria-label="スタート"></button>
       <button class="s" id="btnSkip" aria-label="次へ"><svg viewBox="0 0 24 24"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z"/></svg></button>
     </div>
@@ -614,6 +615,16 @@ $("btnStart").onclick=()=>{
   render(true);
 };
 $("btnSkip").onclick=()=>{if(finished)return;if(!running){idx++;if(idx>=phases.length){finish();return}remain=phases[idx].dur;render(true)}else{endAt=performance.now()}};
+// 戻る：種目開始から3秒以上なら今の種目を最初から、3秒未満なら一つ前の種目へ
+$("btnPrev").onclick=()=>{
+  if(!phases.length)return;
+  const now=performance.now();
+  if(finished){finished=false;recorded=false;let j=phases.length-1;while(j>0&&phases[j].type!=="work")j--;idx=j;remain=phases[j].dur;render(true);return}
+  const p=phases[idx],left=running?Math.max(0,(endAt-now)/1000):remain;
+  if(!(p.type==="work"&&p.dur-left>=3)){let j=idx-1;while(j>0&&phases[j].type!=="work")j--;idx=Math.max(0,j)}
+  remain=phases[idx].dur;lastShown=-1;
+  if(running){endAt=now+remain*1000;announce()}
+  render(true)};
 $("btnReset").onclick=()=>{running=false;keepAwake(false);try{speechSynthesis.cancel()}catch(e){}build()};
 const applyOpts=()=>{saveOpts();if(!running)build()};
 optIds.forEach(id=>$(id).addEventListener("change",applyOpts));
