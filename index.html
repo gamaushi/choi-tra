@@ -78,7 +78,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .exopt select{font:inherit;font-size:15px;background:#2a313c;color:var(--text);border:0;border-radius:8px;padding:5px 6px}
 .exopt .dim{opacity:.6}
 .seg{display:flex;background:#12161c;border-radius:12px;padding:4px;gap:4px;margin:4px 0 6px}
-.seg button{flex:1;padding:10px 4px;border-radius:9px;font-weight:800;font-size:15px;color:var(--sub)}
+.seg button{flex:1;padding:10px 2px;border-radius:9px;font-weight:800;font-size:13.5px;white-space:nowrap;color:var(--sub)}
 .seg button.on{background:var(--work);color:#101318}
 .mchip{font-size:14px;font-weight:700;color:var(--sub);background:#1c222b;border-radius:999px;padding:5px 14px;margin-bottom:6px}
 .ttl{display:flex;justify-content:space-between;align-items:center;gap:6px}
@@ -114,7 +114,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 <div class="sheet" id="sheet">
   <div class="panel">
     <div class="ph2"><b>設定</b><button id="btnClose">閉じる</button></div>
-    <div class="seg" id="seg"><button data-m="abs">腹筋2分</button><button data-m="burn">脂肪燃焼2分</button><button data-m="custom">個別</button></div>
+    <div class="seg" id="seg"><button data-m="abs">腹筋2分</button><button data-m="burn">脂肪燃焼2分</button><button data-m="core">体幹2分</button><button data-m="custom">個別</button></div>
     <div class="row">全種目の時間をまとめて変更<select id="optWork"></select></div>
     <div class="row">全種目の休憩をまとめて変更<select id="optRest"></select></div>
     <div class="row">開始前の準備（秒）<select id="optPrep"><option>3</option><option selected>5</option><option>10</option></select></div>
@@ -174,12 +174,29 @@ const LIB = {
  burpee:{name:"スロー・バーピー", tip:"しゃがんで手を床につく → 足を後ろへ伸ばす → 戻して立つ。跳ばずにゆっくり行う。", sp:0.3, scale:.6,
   K:[{...ST},BP1,BP2,BP1]},
 };
+const PL={hip:[101,75],torso:189,neck:192,face:100,hand:[25,95],elbowHint:[1,1],ankle:[171,89],foot:72,kneeHint:[0,1]};
+const RP={hip:[102,67],torso:199.6,neck:202,face:-70,hand:[52,96],elbowHint:[-1,0],ankle:[170,91],foot:-70,kneeHint:[0,-1]};
+const SP={hip:[99,79],torso:190.4,neck:192,face:-60,hand:[52,22],elbowHint:[-1,0],hand2:[62,97],elbow2Hint:[-1,1],ankle:[170,92],foot:-10,kneeHint:[0,-1]};
+const CB={hip:[100,93],neck:232,face:200,hand:[60,96],elbowHint:[1,0],ankle:[172,94],foot:8,kneeHint:[0,1]};
+Object.assign(LIB,{
+ plankhold:{name:"プランク", tip:"ひじとつま先で体を支え、頭からかかとまで一直線をキープ。お尻を上げすぎず、腰も反らさない。", sp:0.3,
+  A:{...PL}, B:{...PL,hip:[101,74]}},
+ revplank:{name:"リバースプランク", tip:"床に座って手を後ろにつき、お尻を持ち上げて肩からかかとまで一直線をキープ。手は肩の真下に。", sp:0.3,
+  A:{...RP}, B:{...RP,hip:[102,65.5]}},
+ sideL:{name:"左サイドプランク", tip:"左ひじを肩の真下について横向きになり、体を一直線に持ち上げてキープ。きつければ膝をついてOK。", sp:0.3,
+  A:{...SP}, B:{...SP,hip:[99,77.5]}},
+ sideR:{name:"右サイドプランク", tip:"右ひじを肩の真下について横向きになり、体を一直線に持ち上げてキープ。きつければ膝をついてOK。", sp:0.3, mirror:true,
+  A:{...SP}, B:{...SP,hip:[99,77.5]}},
+ cobra:{name:"コブラストレッチ", tip:"うつ伏せで手を胸の横につき、腕を伸ばして上体を起こす。お腹を伸ばしてゆっくり呼吸。腰が痛ければ浅めに。", sp:0.18,
+  A:{...CB,torso:205}, B:{...CB,torso:213,neck:238}},
+});
 const MENUS={abs:{name:"腹筋2分",ids:["plank","revcrunch","bicycle","legraise","kneein","leghold"]},
  burn:{name:"脂肪燃焼2分",ids:["squat","stepjack","lunge","climber","row","burpee"]},
+ core:{name:"体幹2分",ids:["plankhold","revplank","sideL","sideR","cobra"],work:24},
  custom:{name:"個別",ids:["squat","plank","climber","legraise"]}};
-const ABS_IDS=MENUS.abs.ids, BURN_IDS=MENUS.burn.ids;
+const ABS_IDS=MENUS.abs.ids, BURN_IDS=MENUS.burn.ids, CORE_IDS=MENUS.core.ids;
 let menuKey="abs";
-let lists={};for(const k in MENUS)lists[k]=MENUS[k].ids.map(id=>({id,work:20,rest:0}));
+let lists={};for(const k in MENUS)lists[k]=MENUS[k].ids.map(id=>({id,work:MENUS[k].work||20,rest:0}));
 let EX=[];
 
 // ---- 人体モデル描画 ----
@@ -260,7 +277,7 @@ function poseOf(ex,t){
 }
 function drawFig(f,ex,t){
   const P=poseOf(ex,t);
-  f.g.setAttribute("transform",ex.scale?`translate(100 100) scale(${ex.scale}) translate(-100 -100)`:"");
+  const sc=ex.scale||1,mx=ex.mirror?-1:1;f.g.setAttribute("transform",sc!==1||mx<0?`translate(100 100) scale(${sc*mx} ${sc}) translate(-100 -100)`:"");
   const hip=P.hip, sh=ptA(hip,P.torso,LEN.torso), mid=lerpP(hip,sh,.45);
   const nk=ptA(sh,P.neck,LEN.neck), hc=ptA(nk,P.neck,LEN.head+1);
   // 腕
@@ -415,7 +432,7 @@ function showMedia(svg,vid,ex,play){
     if(play){const r=vid.play();if(r&&r.catch)r.catch(()=>{})}else vid.pause();
   }else{svg.style.display="block";vid.style.display="none";vid.pause()}
 }
-const WORK_OPTS=[10,15,20,25,30,40,45,60,90],REST_OPTS=[0,5,10,15,20,30,45,60];
+const WORK_OPTS=[10,15,20,24,25,30,40,45,60,90],REST_OPTS=[0,5,10,15,20,30,45,60];
 const optHtml=(list,v,zero)=>list.map(x=>`<option value="${x}"${x===v?" selected":""}>${x===0&&zero?zero:x+"秒"}</option>`).join("");
 function syncBulk(){
   const same=k=>per.every(x=>x[k]===per[0][k])?per[0][k]:null;
@@ -459,7 +476,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 
 // メニュー切替・個別メニューの編集
 const libOpts=(ids,label)=>`<optgroup label="${label}">${ids.map(id=>`<option value="${id}">${LIB[id].name}</option>`).join("")}</optgroup>`;
-$("addSel").innerHTML='<option value="">＋ 種目を追加…</option>'+libOpts(ABS_IDS,"腹筋")+libOpts(BURN_IDS,"脂肪燃焼");
+$("addSel").innerHTML='<option value="">＋ 種目を追加…</option>'+libOpts(ABS_IDS,"腹筋")+libOpts(BURN_IDS,"脂肪燃焼")+libOpts(CORE_IDS,"体幹・ストレッチ");
 function stopAll(){running=false;keepAwake(false);try{speechSynthesis.cancel()}catch(e){}}
 $("seg").onclick=e=>{const m=e.target.dataset.m;if(!m||m===menuKey)return;stopAll();menuKey=m;menuInit();saveOpts();build()};
 $("addSel").onchange=e=>{const id=e.target.value;if(!id)return;lists.custom.push({id,work:20,rest:0});e.target.value="";stopAll();menuInit();saveOpts();build()};
