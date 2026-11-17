@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>2分 腹筋ワークアウト</title>
+<title>2分ワークアウト</title>
 <meta name="theme-color" content="#101318">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="2分腹筋">
+<meta name="apple-mobile-web-app-title" content="2分ワークアウト">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.json">
 <style>
@@ -59,8 +59,8 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
 /* 設定シート */
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:10}
 .sheet.open{display:block}
-.panel{position:absolute;inset:auto 0 0 0;max-height:88dvh;overflow:auto;background:var(--card);border-radius:18px 18px 0 0;padding:6px 16px calc(24px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
-.ph2{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);padding:10px 0}
+.panel{position:absolute;inset:auto 0 0 0;max-height:88dvh;overflow:auto;background:var(--card);border-radius:18px 18px 0 0;padding:0 16px calc(24px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
+.ph2{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1;background:var(--card);padding:14px 0 10px}
 .ph2 b{font-size:18px}
 .ph2 button{font-size:16px;font-weight:700;color:var(--work);padding:6px 4px}
 .row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
@@ -77,6 +77,14 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .exopt label{display:flex;align-items:center;gap:6px}
 .exopt select{font:inherit;font-size:15px;background:#2a313c;color:var(--text);border:0;border-radius:8px;padding:5px 6px}
 .exopt .dim{opacity:.6}
+.seg{display:flex;background:#12161c;border-radius:12px;padding:4px;gap:4px;margin:4px 0 6px}
+.seg button{flex:1;padding:10px 4px;border-radius:9px;font-weight:800;font-size:15px;color:var(--sub)}
+.seg button.on{background:var(--work);color:#101318}
+.mchip{font-size:14px;font-weight:700;color:var(--sub);background:#1c222b;border-radius:999px;padding:5px 14px;margin-bottom:6px}
+.ttl{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.ed{display:flex;gap:4px}
+.ed button{width:32px;height:30px;border-radius:8px;background:#2a313c;font-size:15px}
+.ed button:disabled{opacity:.3}
 .note{font-size:12.5px;color:var(--sub);line-height:1.6;margin-top:14px}
 </style>
 </head>
@@ -90,6 +98,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
   </div>
   <div class="side">
     <div class="info">
+      <button class="mchip" id="mchip"></button>
       <div class="sec" id="sec">20</div>
       <div class="name" id="name"></div>
       <div class="next" id="nextBox"><div class="nfw"><svg id="nextFig" viewBox="0 0 200 112"></svg><video id="nvid" muted loop playsinline preload="auto"></video></div><div>NEXT<br><b id="nextName"></b></div></div>
@@ -105,6 +114,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 <div class="sheet" id="sheet">
   <div class="panel">
     <div class="ph2"><b>設定</b><button id="btnClose">閉じる</button></div>
+    <div class="seg" id="seg"><button data-m="abs">腹筋2分</button><button data-m="burn">脂肪燃焼2分</button><button data-m="custom">個別</button></div>
     <div class="row">全種目の時間をまとめて変更<select id="optWork"></select></div>
     <div class="row">全種目の休憩をまとめて変更<select id="optRest"></select></div>
     <div class="row">開始前の準備（秒）<select id="optPrep"><option>3</option><option selected>5</option><option>10</option></select></div>
@@ -115,6 +125,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <div class="total" id="total"></div>
     <h2>種目ごとの時間と休憩</h2>
     <ol class="menu" id="menu"></ol>
+    <div class="row" id="addRow"><select id="addSel" style="width:100%"></select></div>
     <p class="note">設定はこのブラウザに保存されます。スマホを横向きにすると動画が大きく表示されます。<br>腰に痛みが出たら中止してください。レッグレイズ系で腰が浮く場合は、膝を曲げるか脚を高めの位置で止めると負担が減ります。</p>
   </div>
 </div>
@@ -125,26 +136,51 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 // 角度は度（0=右, 90=下, -90=上）。手首・足首の位置を指定すると、肘・膝は腕や脚の長さを保ったまま自動で曲がる。
 const SUP={hip:[100,91],torso:180,neck:180,face:-90,hand:[96,95.5],elbowHint:[0,-1],kneeHint:[-0.3,-1]};
 const PROP={hip:[100,91],torso:206,neck:236,face:-30,hand:[78,95],elbowHint:[-1,1],kneeHint:[-0.3,-1]};
-const EX = [
- {name:"プランク・ヒップアップ", tip:"ひじとつま先で体を支え、お尻を上げ下げする。下げたときに腰を反らさない。", sp:0.7,
+const ST={hip:[100,22],torso:-90,neck:-90,face:0,hand:[103,20],elbowHint:[-1,0],ankle:[100,94],foot:0,kneeHint:[1,0]};
+const MC={hip:[100,58],torso:195,neck:200,face:100,hand:[52,96],elbowHint:[1,0],kneeHint:[-1,0.6],foot:72,foot2:72};
+const RW={hip:[100,26],torso:-25,neck:-20,face:65,ankle:[94,94],kneeHint:[1,0],elbowHint:[-0.3,-1],foot:0};
+const BP1={hip:[82,62],torso:-20,neck:-10,face:60,hand:[132,95],elbowHint:[0,-1],ankle:[100,94],foot:0,kneeHint:[1,-0.5]};
+const BP2={hip:[83,56],torso:-12,neck:-12,face:80,hand:[132,95],elbowHint:[0,-1],ankle:[18,88],foot:110,kneeHint:[0,1]};
+// 種目ライブラリ（cat: abs=腹筋 / burn=脂肪燃焼。scale は立ち姿勢を画面に収める縮小率、K は3コマ以上の動き）
+const LIB = {
+ plank:{name:"プランク・ヒップアップ", tip:"ひじとつま先で体を支え、お尻を上げ下げする。下げたときに腰を反らさない。", sp:0.7,
   A:{hip:[101,75],torso:189,neck:192,face:100,hand:[25,95],elbowHint:[1,1],ankle:[171,89],foot:72,kneeHint:[0,1]},
   B:{hip:[103,50],torso:162,neck:178,face:95,hand:[25,95],elbowHint:[1,1],ankle:[166,88],foot:66,kneeHint:[0,1]}},
- {name:"リバースクランチ", tip:"仰向けで脚を天井に向け、お尻を少し浮かせて足を真上へ突き上げる。反動を使わない。", sp:0.8,
+ revcrunch:{name:"リバースクランチ", tip:"仰向けで脚を天井に向け、お尻を少し浮かせて足を真上へ突き上げる。反動を使わない。", sp:0.8,
   A:{...SUP,ankle:[104,19],foot:-5},
   B:{...SUP,hip:[97,80],torso:168,neck:175,face:-85,ankle:[92,8],foot:-12}},
- {name:"バイシクルクランチ", tip:"手を頭の後ろに。自転車をこぐように膝を交互に胸へ引き寄せ、反対側のひじを近づける。", sp:0.75,
+ bicycle:{name:"バイシクルクランチ", tip:"手を頭の後ろに。自転車をこぐように膝を交互に胸へ引き寄せ、反対側のひじを近づける。", sp:0.75,
   A:{...SUP,torso:200,neck:212,face:-58,hand:[30,70],elbowHint:[0.4,-1],ankle:[118,66],foot:20,ankle2:[166,70],foot2:-5},
   B:{...SUP,torso:198,neck:210,face:-60,hand:[30,70],elbowHint:[0.4,-1],ankle:[166,70],foot:-5,ankle2:[118,66],foot2:20}},
- {name:"レッグレイズ", video:"video/4.mp4", tip:"仰向けで両脚をそろえて上げ下げ。腰が浮くなら膝を少し曲げてもOK。下げきらずに止める。", sp:0.45,
+ legraise:{name:"レッグレイズ", video:"video/4.mp4", tip:"仰向けで両脚をそろえて上げ下げ。腰が浮くなら膝を少し曲げてもOK。下げきらずに止める。", sp:0.45,
   A:{...SUP,ankle:[111,19.5],foot:-75},
   B:{...SUP,ankle:[170,80],foot:-5}},
- {name:"ニーイン・ニーアウト", tip:"ひじをついて上体を起こし、膝を胸に引き寄せてから脚を伸ばす。足は床につけない。", sp:0.7,
+ kneein:{name:"ニーイン・ニーアウト", tip:"ひじをついて上体を起こし、膝を胸に引き寄せてから脚を伸ばす。足は床につけない。", sp:0.7,
   A:{...PROP,ankle:[120,70],foot:25},
   B:{...PROP,ankle:[168,74],foot:-5}},
- {name:"レッグホールド", tip:"ひじをついて上体を起こし、脚を伸ばして床から少し浮かせたままキープ。息は止めない。", sp:0.5,
+ leghold:{name:"レッグホールド", tip:"ひじをついて上体を起こし、脚を伸ばして床から少し浮かせたままキープ。息は止めない。", sp:0.5,
   A:{...PROP,ankle:[168,73],foot:-8},
   B:{...PROP,torso:205,ankle:[168,76],foot:-6}},
-];
+ squat:{name:"スクワット", tip:"足を肩幅に開き、お尻を後ろに引いて太ももが床と平行近くまで下げる。膝はつま先と同じ向きに。", sp:0.45, scale:.6,
+  A:{...ST,hand:[148,-26],elbowHint:[0,1]}, B:{...ST,hip:[78,50],torso:-50,neck:-60,face:20,hand:[157,10],elbowHint:[0,1]}},
+ stepjack:{name:"ステップジャック", tip:"跳ばずに、左右交互に足を横へ一歩出しながら両手を頭の上へ。リズムよく続ける。", sp:0.9, scale:.6,
+  A:{...ST}, B:{...ST,hand:[96,-76],elbowHint:[1,0],ankle:[114,94],ankle2:[86,94]}},
+ lunge:{name:"リバースランジ", tip:"片足を大きく後ろへ引いて沈み、前足で床を押して戻る。左右交互に。前の膝を前に出しすぎない。", sp:0.45, scale:.6,
+  A:{...ST,hand:[110,22]}, B:{...ST,hip:[94,48],torso:-88,neck:-88,hand:[104,48],ankle:[120,94],ankle2:[54,90],foot2:35,knee2Hint:[0,1]}},
+ climber:{name:"マウンテンクライマー", tip:"腕立ての姿勢で、膝を交互に胸へ引き寄せる。お尻を上げすぎない。ゆっくりでOK。", sp:1.0,
+  A:{...MC,ankle:[104,84],ankle2:[168,90]}, B:{...MC,ankle:[168,90],ankle2:[104,84]}},
+ row:{name:"ダンベルロウ", tip:"膝を軽く曲げて上体を前に倒し、ダンベルをおへそに向けて引き上げる。背中を丸めない。", sp:0.6, scale:.6, db:true,
+  A:{...RW,hand:[146,53]}, B:{...RW,hand:[128,18]}},
+ burpee:{name:"スロー・バーピー", tip:"しゃがんで手を床につく → 足を後ろへ伸ばす → 戻して立つ。跳ばずにゆっくり行う。", sp:0.3, scale:.6,
+  K:[{...ST},BP1,BP2,BP1]},
+};
+const MENUS={abs:{name:"腹筋2分",ids:["plank","revcrunch","bicycle","legraise","kneein","leghold"]},
+ burn:{name:"脂肪燃焼2分",ids:["squat","stepjack","lunge","climber","row","burpee"]},
+ custom:{name:"個別",ids:["squat","plank","climber","legraise"]}};
+const ABS_IDS=MENUS.abs.ids, BURN_IDS=MENUS.burn.ids;
+let menuKey="abs";
+let lists={};for(const k in MENUS)lists[k]=MENUS[k].ids.map(id=>({id,work:20,rest:0}));
+let EX=[];
 
 // ---- 人体モデル描画 ----
 const NS="http://www.w3.org/2000/svg";
@@ -195,13 +231,18 @@ function buildFig(svg,small){
   // 手前側
   f.leg1t=seg(COL.pants,13);f.leg1s=seg(COL.pants,10.5);f.shoe1=seg(COL.shoe,7.5);f.sole1=seg(COL.sole,2.2);
   f.arm1u=seg(COL.shirt,9.5);f.arm1f=seg(COL.skin,7);f.hand1=mk("circle",{r:3.8,fill:COL.skin});
+  f.db=mk("g",{});f.db.innerHTML=`<rect x="-7" y="-1.6" width="14" height="3.2" rx="1" fill="#555"/><rect x="-8" y="-5" width="4" height="10" rx="1.5" fill="#333"/><rect x="4" y="-5" width="4" height="10" rx="1.5" fill="#333"/>`;
+  f.g=g;
   return f;
 }
 const L2=(e,a,b)=>{e.setAttribute("x1",a[0].toFixed(1));e.setAttribute("y1",a[1].toFixed(1));e.setAttribute("x2",b[0].toFixed(1));e.setAttribute("y2",b[1].toFixed(1))};
 const lerpN=(a,b,t)=>a+(b-a)*t, lerpP=(a,b,t)=>[lerpN(a[0],b[0],t),lerpN(a[1],b[1],t)];
 function mixPose(A,B,t){
   const P={};
-  for(const k in A){const a=A[k],b=B[k]??a;P[k]=Array.isArray(a)?lerpP(a,b,t):typeof a==="number"?lerpN(a,b,t):a}
+  const base=k=>k.replace("2","");
+  for(const k of new Set([...Object.keys(A),...Object.keys(B)])){
+    const a=A[k]??A[base(k)]??B[k],b=B[k]??B[base(k)]??a;
+    P[k]=Array.isArray(a)?lerpP(a,b,t):typeof a==="number"?lerpN(a,b,t):a}
   // 足首は腰を中心に「角度と距離」で補間（脚が弧を描いて自然に動く）
   for(const k of ["ankle","ankle2"]){
     const a=A[k]||A.ankle,b=B[k]||B.ankle;if(!a)continue;
@@ -212,8 +253,14 @@ function mixPose(A,B,t){
   }
   return P;
 }
+function poseOf(ex,t){
+  if(!ex.K)return mixPose(ex.A,ex.B,t);
+  const n=ex.K.length,x=((t%1)+1)%1*n,i=Math.floor(x),l=(1-Math.cos((x-i)*Math.PI))/2;
+  return mixPose(ex.K[i],ex.K[(i+1)%n],l);
+}
 function drawFig(f,ex,t){
-  const P=mixPose(ex.A,ex.B,t);
+  const P=poseOf(ex,t);
+  f.g.setAttribute("transform",ex.scale?`translate(100 100) scale(${ex.scale}) translate(-100 -100)`:"");
   const hip=P.hip, sh=ptA(hip,P.torso,LEN.torso), mid=lerpP(hip,sh,.45);
   const nk=ptA(sh,P.neck,LEN.neck), hc=ptA(nk,P.neck,LEN.head+1);
   // 腕
@@ -244,14 +291,18 @@ function drawFig(f,ex,t){
   const ea=ptA(hc,hb,2.5);f.ear.setAttribute("cx",ea[0]);f.ear.setAttribute("cy",ea[1]);
   L2(f.leg1t,hip,kn1);L2(f.leg1s,kn1,an1);L2(f.shoe1,an1,ft1);L2(f.sole1,soleOff(an1,P.foot,3.6),soleOff(ft1,P.foot,3.6));
   L2(f.arm1u,sh,el1);L2(f.arm1f,el1,ha1);f.hand1.setAttribute("cx",ha1[0]);f.hand1.setAttribute("cy",ha1[1]);
+  f.db.style.display=ex.db?"":"none";if(ex.db)f.db.setAttribute("transform",`translate(${ha1[0].toFixed(1)} ${ha1[1].toFixed(1)})`);
 }
 
 // ---- 設定 ----
 const $=id=>document.getElementById(id);
-let per=EX.map(()=>({work:20,rest:0}));
+let per=[];
+function applyMenu(){per=lists[menuKey];EX=per.map(it=>LIB[it.id]);}
 const optIds=["optPrep","optSets","optSetRest","optVoice","optBeep"];
-function loadOpts(){try{const o=JSON.parse(localStorage.getItem("abs2min")||"{}");if(Array.isArray(o.per)&&o.per.length===EX.length)per=o.per.map(x=>({work:+x.work||20,rest:+x.rest||0}));optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
-function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.per=per;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
+function loadOpts(){try{const o=JSON.parse(localStorage.getItem("abs2min")||"{}");if(Array.isArray(o.per)&&o.per.length===6)lists.abs=o.per.map((x,i)=>({id:ABS_IDS[i],work:+x.work||20,rest:+x.rest||0}));
+if(o.lists)for(const k in MENUS){const l=o.lists[k];if(Array.isArray(l)&&l.length&&l.every(x=>LIB[x.id]))lists[k]=l.map(x=>({id:x.id,work:+x.work||20,rest:+x.rest||0}))}
+if(MENUS[o.menu])menuKey=o.menu;optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
+function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.lists=lists;o.menu=menuKey;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
 const opt=()=>({prep:+$("optPrep").value,sets:+$("optSets").value,setRest:+$("optSetRest").value,voice:$("optVoice").checked,beep:$("optBeep").checked});
 
 // ---- フェーズ構築 ----
@@ -327,7 +378,7 @@ function curEx(){return EX[phases[idx]?.ex??0]}
 function animate(now){
   const p=phases[idx];const ex=curEx();
   const moving=running&&p&&p.type==="work";
-  const t=moving?(1-Math.cos(now/1000*Math.PI*ex.sp))/2:0;
+  const t=!moving?0:ex.K?now/1000*ex.sp:(1-Math.cos(now/1000*Math.PI*ex.sp))/2;
   drawFig(fig,ex,t);
 }
 function render(full){
@@ -373,9 +424,15 @@ function syncBulk(){
   $("optRest").innerHTML=(r===null?'<option value="" selected>個別</option>':"")+optHtml(REST_OPTS,r,"なし");
 }
 function menuInit(){
+  applyMenu();
+  const cus=menuKey==="custom";
+  document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on",b.dataset.m===menuKey));
+  $("mchip").textContent=MENUS[menuKey].name+" ▾";
+  $("addRow").style.display=cus?"":"none";
   $("menu").innerHTML=EX.map((e,i)=>{
     const last=i===EX.length-1;
-    return `<li><div class="no">${i+1}</div><div style="flex:1"><b>${e.name}</b><span>${e.tip}</span>
+    const ed=cus?`<div class="ed"><button data-act="up" data-i="${i}"${i===0?" disabled":""}>↑</button><button data-act="down" data-i="${i}"${last?" disabled":""}>↓</button><button data-act="del" data-i="${i}"${EX.length<2?" disabled":""}>✕</button></div>`:"";
+    return `<li><div class="no">${i+1}</div><div style="flex:1"><div class="ttl"><b>${e.name}</b>${ed}</div><span>${e.tip}</span>
       <div class="exopt"><label>時間<select data-i="${i}" data-k="work">${optHtml(WORK_OPTS,per[i].work)}</select></label>
       ${last?'<label class="dim">最後の種目</label>':`<label>このあと休憩<select data-i="${i}" data-k="rest">${optHtml(REST_OPTS,per[i].rest,"なし")}</select></label>`}</div></div></li>`}).join("");
   syncBulk();
@@ -400,6 +457,18 @@ $("optRest").addEventListener("change",e=>{if(e.target.value==="")return;per.for
 $("menu").addEventListener("change",e=>{const el=e.target;if(!el.dataset.k)return;per[+el.dataset.i][el.dataset.k]=+el.value;syncBulk();applyOpts()});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&running)keepAwake(true)});
 
+// メニュー切替・個別メニューの編集
+const libOpts=(ids,label)=>`<optgroup label="${label}">${ids.map(id=>`<option value="${id}">${LIB[id].name}</option>`).join("")}</optgroup>`;
+$("addSel").innerHTML='<option value="">＋ 種目を追加…</option>'+libOpts(ABS_IDS,"腹筋")+libOpts(BURN_IDS,"脂肪燃焼");
+function stopAll(){running=false;keepAwake(false);try{speechSynthesis.cancel()}catch(e){}}
+$("seg").onclick=e=>{const m=e.target.dataset.m;if(!m||m===menuKey)return;stopAll();menuKey=m;menuInit();saveOpts();build()};
+$("addSel").onchange=e=>{const id=e.target.value;if(!id)return;lists.custom.push({id,work:20,rest:0});e.target.value="";stopAll();menuInit();saveOpts();build()};
+$("menu").addEventListener("click",e=>{const b=e.target.closest("button[data-act]");if(!b)return;const i=+b.dataset.i,l=lists.custom;
+  if(b.dataset.act==="up"&&i>0)[l[i-1],l[i]]=[l[i],l[i-1]];
+  else if(b.dataset.act==="down"&&i<l.length-1)[l[i+1],l[i]]=[l[i],l[i+1]];
+  else if(b.dataset.act==="del"&&l.length>1)l.splice(i,1);
+  stopAll();menuInit();saveOpts();build()});
+$("mchip").onclick=()=>$("sheet").classList.add("open");
 $("btnGear").onclick=()=>$("sheet").classList.add("open");
 $("btnClose").onclick=()=>$("sheet").classList.remove("open");
 $("sheet").onclick=e=>{if(e.target.id==="sheet")$("sheet").classList.remove("open")};
