@@ -132,6 +132,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .pvb{display:flex;gap:10px;padding:10px 14px 14px}
 .pvb button{flex:1;padding:12px;border-radius:10px;background:#2a313c;font-weight:800}
 #pvAdd{color:var(--work)}
+.vtest{background:#2a313c;border-radius:10px;padding:8px 14px;font-weight:700;color:var(--work)}
 .note{font-size:12.5px;color:var(--sub);line-height:1.6;margin-top:14px}
 </style>
 </head>
@@ -171,6 +172,9 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <div class="row">セット数<select id="optSets"><option selected>1</option><option>2</option><option>3</option></select></div>
     <div class="row">セット間の休憩（秒）<select id="optSetRest"><option>30</option><option selected>60</option><option>90</option></select></div>
     <div class="row">音声ガイド<input type="checkbox" id="optVoice" checked></div>
+    <div class="row">声<select id="optVoiceName" style="max-width:62%"></select></div>
+    <div class="row">話す速さ<select id="optRate"><option value="0.9">ゆっくり</option><option value="1.05" selected>ふつう</option><option value="1.2">はやめ</option></select></div>
+    <div class="row" style="justify-content:flex-end"><button id="voiceTest" class="vtest">▶ 試しに聞く</button></div>
     <div class="row">ビープ音<input type="checkbox" id="optBeep" checked></div>
     <div class="total" id="total"></div>
     <h2>種目ごとの時間と休憩</h2>
@@ -398,7 +402,7 @@ function drawFig(f,ex,t){
 const $=id=>document.getElementById(id);
 let per=[];
 function applyMenu(){if(!MENUS[menuKey]&&!curCustom())menuKey="abs";per=MENUS[menuKey]?lists[menuKey]:curCustom().items;EX=per.map(it=>LIB[it.id]);}
-const optIds=["optPrep","optSets","optSetRest","optVoice","optBeep"];
+const optIds=["optRate","optPrep","optSets","optSetRest","optVoice","optBeep"];
 function loadOpts(){try{const o=JSON.parse(localStorage.getItem("abs2min")||"{}");if(Array.isArray(o.per)&&o.per.length===6)lists.abs=o.per.map((x,i)=>({id:ABS_IDS[i],work:+x.work||20,rest:+x.rest||0}));
 const clean=l=>Array.isArray(l)&&l.length&&l.every(x=>LIB[x.id])?l.map(x=>({id:x.id,work:+x.work||20,rest:+x.rest||0})):null;
 // プリセットは種目と順番を固定し、保存されている時間・休憩だけ引き継ぐ
@@ -406,9 +410,9 @@ if(o.lists)for(const k in MENUS){const l=clean(o.lists[k]);if(!l)continue;const 
   lists[k]=MENUS[k].ids.map(id=>{const j=pool.findIndex(x=>x.id===id);return j>=0?pool.splice(j,1)[0]:{id,work:MENUS[k].work||20,rest:0}})}
 if(Array.isArray(o.customs)){const c=o.customs.map(c=>({key:String(c.key),name:String(c.name||"個別"),items:clean(c.items)})).filter(c=>c.items&&isCustom(c.key));if(c.length)customs=c}
 else if(o.lists&&clean(o.lists.custom))customs[0].items=clean(o.lists.custom);
-if(o.menu==="custom")o.menu="c1";
+if(o.menu==="custom")o.menu="c1";if(o.voice){voicePref=o.voice;if(voices.some(v=>v.voiceURI===o.voice))$("optVoiceName").value=o.voice}
 if(MENUS[o.menu]||customs.some(c=>c.key===o.menu))menuKey=o.menu;optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
-function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.lists=lists;o.customs=customs;o.menu=menuKey;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
+function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.lists=lists;o.customs=customs;o.menu=menuKey;o.voice=$("optVoiceName").value;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
 const opt=()=>({prep:+$("optPrep").value,sets:+$("optSets").value,setRest:+$("optSetRest").value,voice:$("optVoice").checked,beep:$("optBeep").checked});
 
 // ---- フェーズ構築 ----
@@ -438,9 +442,25 @@ function beep(freq=880,len=.12,vol=.25){
     g.gain.setValueAtTime(vol,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+len);
     o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+len)}catch(e){}
 }
+// 日本語の声を品質順に並べ、一番良さそうなものを初期値にする
+let voices=[],voicePref="";
+function voiceScore(v){const n=v.name;let sc=0;
+  if(/Google/i.test(n))sc+=50;if(/Premium|プレミアム/i.test(n))sc+=60;if(/Enhanced|拡張/i.test(n))sc+=45;if(/Siri/i.test(n))sc+=55;
+  if(/Neural|Natural|Online/i.test(n))sc+=55;if(/O-?ren|Kyoko|Nanami|Hattori/i.test(n))sc+=15;if(/compact|Eloquence/i.test(n))sc-=40;
+  if(!v.localService)sc+=5;return sc}
+function loadVoices(){
+  if(!("speechSynthesis" in window))return;
+  voices=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  const sel=$("optVoiceName"),h=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  sel.innerHTML=voices.length?voices.map((v,i)=>`<option value="${h(v.voiceURI)}">${h(v.name.replace(/Microsoft |Google /,""))}${i===0?"（おすすめ）":""}</option>`).join(""):'<option value="">標準の声</option>';
+  if(voicePref&&voices.some(v=>v.voiceURI===voicePref))sel.value=voicePref;
+}
+if("speechSynthesis" in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;setTimeout(loadVoices,800)}
 function say(text){
   if(!opt().voice||!("speechSynthesis" in window))return;
-  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";u.rate=1.05;speechSynthesis.speak(u)}catch(e){}
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";
+    const v=voices.find(x=>x.voiceURI===$("optVoiceName").value)||voices[0];if(v)u.voice=v;
+    u.rate=+$("optRate").value||1.05;u.pitch=1;speechSynthesis.speak(u)}catch(e){}
 }
 let wake=null;
 async function keepAwake(on){try{if(on&&"wakeLock" in navigator){wake=await navigator.wakeLock.request("screen")}else if(wake){await wake.release();wake=null}}catch(e){}}
@@ -625,6 +645,8 @@ $("btnPrev").onclick=()=>{
   remain=phases[idx].dur;lastShown=-1;
   if(running){endAt=now+remain*1000;announce()}
   render(true)};
+$("optVoiceName").onchange=()=>{voicePref=$("optVoiceName").value;saveOpts();$("voiceTest").click()};
+$("voiceTest").onclick=()=>{const was=$("optVoice").checked;$("optVoice").checked=true;say("スクワット、スタート。次はリバースランジです");$("optVoice").checked=was};
 $("btnReset").onclick=()=>{running=false;keepAwake(false);try{speechSynthesis.cancel()}catch(e){}build()};
 const applyOpts=()=>{saveOpts();if(!running)build()};
 optIds.forEach(id=>$(id).addEventListener("change",applyOpts));
