@@ -23,9 +23,8 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
 .ov{position:absolute;top:8px;left:8px;display:flex;gap:6px;align-items:center;pointer-events:none}
 .pill{padding:3px 10px;border-radius:999px;font-size:13px;font-weight:800;background:rgba(0,0,0,.55);color:#fff}
 .pill.ph{background:var(--accent);color:#101318}
-#btnLog,#btnGear{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
-#btnLog{right:52px}
-#btnLog svg,#btnGear svg{width:22px;height:22px;fill:#fff}
+#btnGear{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
+#btnGear svg{width:22px;height:22px;fill:#fff}
 .bar{height:6px;background:#2b333e}
 .bar i{display:block;height:100%;width:0;background:var(--accent)}
 /* 情報エリア */
@@ -51,11 +50,15 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
   #app{max-width:none;flex-direction:row}
   .media{flex:1;height:100%;display:flex;flex-direction:column}
   .figwrap{flex:1;aspect-ratio:auto}
-  .side{width:190px;display:flex;flex-direction:column}
-  .sec{font-size:72px}.name{font-size:18px}
-  .next{flex-direction:column;text-align:center;margin-top:8px}
-  .ctrl{gap:12px;padding:8px 0 12px}
-  .ctrl .s{width:50px;height:50px}.ctrl .m{width:66px;height:66px}
+  .side{width:min(300px,36vw);display:flex;flex-direction:column;padding:4px 0}
+  .info{padding:4px 8px;min-height:0;overflow:hidden}
+  .mchip{display:none}
+  .sec{font-size:min(68px,20vh)}.name{font-size:17px;margin-top:2px}
+  .next{margin-top:8px;font-size:12px}.next b{font-size:13px}
+  .nfw{width:64px}
+  .ctrl{gap:8px;padding:4px 0 8px}
+  .ctrl .s{width:44px;height:44px}.ctrl .m{width:58px;height:58px}
+  .ctrl svg{width:22px;height:22px}.ctrl .m svg{width:30px;height:30px}
 }
 /* 設定シート */
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:10}
@@ -132,6 +135,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .pvb{display:flex;gap:10px;padding:10px 14px 14px}
 .pvb button{flex:1;padding:12px;border-radius:10px;background:#2a313c;font-weight:800}
 #pvAdd{color:var(--work)}
+.ph2 .logb{color:var(--text);background:#2a313c;border-radius:9px;padding:6px 10px;margin-right:10px}
 .vtest{background:#2a313c;border-radius:10px;padding:8px 14px;font-weight:700;color:var(--work)}
 .note{font-size:12.5px;color:var(--sub);line-height:1.6;margin-top:14px}
 </style>
@@ -141,7 +145,6 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
   <div class="media">
     <div class="figwrap"><svg id="fig" viewBox="0 0 200 112"></svg><video id="vid" muted loop playsinline preload="auto"></video></div>
     <div class="ov"><span class="pill" id="count">1/6</span><span class="pill ph" id="phase">スタート待ち</span></div>
-    <button id="btnLog" aria-label="記録"><svg viewBox="0 0 24 24"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v11H5zm2 2v2h2v-2zm4 0v2h2v-2zm4 0v2h2v-2zm-8 4v2h2v-2zm4 0v2h2v-2z"/></svg></button>
     <button id="btnGear" aria-label="設定"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L14.9 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.4 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.9h4l.4-2.9c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM12.9 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></button>
     <div class="bar"><i id="bar"></i></div>
   </div>
@@ -163,7 +166,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 
 <div class="sheet" id="sheet">
   <div class="panel">
-    <div class="ph2"><b>設定</b><button id="btnClose">閉じる</button></div>
+    <div class="ph2"><b>設定</b><span><button id="btnLog" class="logb">📅 記録</button><button id="btnClose">閉じる</button></span></div>
     <div class="seg" id="seg"></div>
     <div class="row" id="cusRow"><input id="cusName" maxlength="12" aria-label="プラン名"><button id="cusDel" class="danger">削除</button></div>
     <div class="row">全種目の時間をまとめて変更<select id="optWork"></select></div>
@@ -517,7 +520,7 @@ function renderLog(){
     out+=`<div class="lrow"><span class="tm">${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}</span><span class="pl">${esc(r.plan)}${r.sets>1?` ×${r.sets}セット`:""}</span><span class="du">${fmtSec(r.sec)}</span><button data-t="${r.t}" aria-label="削除">✕</button></div>`});
   $("logList").innerHTML=out||'<p class="note">まだ記録はありません。メニューを最後までやると自動で記録されます。</p>';
 }
-$("btnLog").onclick=()=>{renderLog();$("logSheet").classList.add("open")};
+$("btnLog").onclick=()=>{$("sheet").classList.remove("open");renderLog();$("logSheet").classList.add("open")};
 $("logClose").onclick=()=>$("logSheet").classList.remove("open");
 $("logSheet").onclick=e=>{if(e.target.id==="logSheet")$("logSheet").classList.remove("open")};
 $("logList").onclick=e=>{const b=e.target.closest("button[data-t]");if(!b)return;
@@ -565,6 +568,7 @@ function render(full){
   $("bar").style.width=(finished?100:(1-remain/p.dur)*100)+"%";
   if(!full)return;
   $("count").textContent=`${p.ex+1}/${EX.length}`;
+  $("phase").style.display=running&&p.type==="work"&&!finished?"none":"";
   $("phase").textContent=finished?(recorded?"記録しました":"完了"):!running&&idx===0&&remain===p.dur?"スタート待ち":!running?"一時停止":p.type==="work"?(o.sets>1?`${p.set}セット目`:"運動中"):p.type==="rest"?"休憩":"準備";
   $("name").textContent=finished?"お疲れさまでした！":ex.name;
   $("tip").textContent=finished?"もう一度やるときは「もう一度」を押してください。":ex.tip;
