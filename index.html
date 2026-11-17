@@ -100,6 +100,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .ed{display:flex;gap:4px}
 .ed button{width:32px;height:30px;border-radius:8px;background:#2a313c;font-size:15px}
 .ed button:disabled{opacity:.3}
+.lfilter{width:100%;font:inherit;font-size:16px;background:#2a313c;color:var(--text);border:0;border-radius:10px;padding:10px;margin:2px 0 10px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:4px 0 12px}
 .stats div{background:#12161c;border-radius:10px;padding:8px 4px;text-align:center}
 .stats b{display:block;font-size:22px;color:var(--work)}
@@ -200,6 +201,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 <div class="sheet" id="logSheet">
   <div class="panel">
     <div class="ph2"><b id="logTitle">記録</b><button id="logClose">閉じる</button></div>
+    <select id="logFilter" class="lfilter" aria-label="プランで絞り込み"></select>
     <div class="stats" id="stats"></div>
     <div class="cal" id="cal"></div>
     <h2>履歴</h2>
@@ -503,7 +505,7 @@ function finish(){
   say("お疲れさまでした");keepAwake(false);
   const planned=phases.filter(p=>p.type==="work").reduce((a,p)=>a+p.dur,0);
   recorded=doneSec>=planned*0.5;
-  if(recorded)addLog({t:Date.now(),plan:menuName(menuKey),sec:Math.round(doneSec),sets:opt().sets});
+  if(recorded)addLog({t:Date.now(),key:menuKey,plan:menuName(menuKey),sec:Math.round(doneSec),sets:opt().sets});
   if(recorded)setTimeout(()=>{if(finished){$("sheet").classList.remove("open");renderLog(true);$("logSheet").classList.add("open")}},1500);
   render(true);
 }
@@ -516,8 +518,25 @@ function addLog(r){const l=getLog();l.push(r);setLog(l)}
 const dkey=d=>`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
 const WD="日月火水木金土";
 const fmtSec=s=>s>=60?`${Math.floor(s/60)}分${s%60?s%60+"秒":""}`:`${s}秒`;
+// 記録をプランごとにまとめるキー：プランの番号で。番号の無い古い記録は名前から推定
+let logSel="all";
+function logKey(r){
+  if(r.key)return r.key;
+  for(const k in MENUS)if(MENUS[k].name===r.plan)return k;
+  const c=customs.find(c=>c.name===r.plan);return c?c.key:"name:"+r.plan;
+}
+// 番号の無い古い記録に、今のプラン名からプラン番号を付けておく（以後は改名しても同じプランとして集計）
+function migrateLog(){const l=getLog();let ch=false;for(const r of l)if(!r.key){r.key=logKey(r);ch=true}if(ch)setLog(l)}
 function renderLog(justDone){
-  const l=getLog().sort((a,b)=>b.t-a.t),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const all=getLog().sort((a,b)=>b.t-a.t),groups=new Map();
+  for(const r of all){const k=logKey(r);if(!groups.has(k))groups.set(k,r.plan)}
+  const label=k=>MENUS[k]?MENUS[k].name:customs.some(c=>c.key===k)?menuName(k):`${groups.get(k)}（削除済み）`;
+  const order=k=>MENUS[k]?0:customs.some(c=>c.key===k)?1:2;
+  const keys=[...groups.keys()].sort((a,b)=>order(a)-order(b));
+  if(logSel!=="all"&&!groups.has(logSel))logSel="all";
+  $("logFilter").innerHTML=`<option value="all">すべてのプラン（${all.length}回）</option>`+keys.map(k=>`<option value="${esc(k)}"${k===logSel?" selected":""}>${esc(label(k))}（${all.filter(r=>logKey(r)===k).length}回）</option>`).join("");
+  $("logFilter").value=logSel;
+  const l=logSel==="all"?all:all.filter(r=>logKey(r)===logSel),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const days=new Set(l.map(r=>dkey(new Date(r.t))));
   const mon=new Date(today);mon.setDate(today.getDate()-((today.getDay()+6)%7));
   const inWeek=l.filter(r=>r.t>=mon.getTime()),inMonth=l.filter(r=>{const d=new Date(r.t);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()});
@@ -533,11 +552,12 @@ function renderLog(justDone){
   let out="",last="";
   l.forEach(r=>{const x=new Date(r.t),k=dkey(x);
     if(k!==last){out+=`<div class="lday">${x.getMonth()+1}/${x.getDate()}（${WD[x.getDay()]}）</div>`;last=k}
-    out+=`<div class="lrow${justDone&&r===l[0]?" new":""}"><span class="tm">${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}</span><span class="pl">${esc(r.plan)}${r.sets>1?` ×${r.sets}セット`:""}</span><span class="du">${fmtSec(r.sec)}</span><button data-t="${r.t}" aria-label="削除">✕</button></div>`});
+    out+=`<div class="lrow${justDone&&r===all[0]?" new":""}"><span class="tm">${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}</span><span class="pl">${esc(MENUS[logKey(r)]||customs.some(c=>c.key===logKey(r))?label(logKey(r)):r.plan)}${r.sets>1?` ×${r.sets}セット`:""}</span><span class="du">${fmtSec(r.sec)}</span><button data-t="${r.t}" aria-label="削除">✕</button></div>`});
   $("logTitle").textContent=justDone?"お疲れさまでした！":"記録";
   $("logList").innerHTML=out||'<p class="note">まだ記録はありません。メニューを最後までやると自動で記録されます。</p>';
 }
 $("btnLog").onclick=()=>{$("sheet").classList.remove("open");renderLog();$("logSheet").classList.add("open")};
+$("logFilter").onchange=e=>{logSel=e.target.value;renderLog()};
 $("logClose").onclick=()=>$("logSheet").classList.remove("open");
 $("logSheet").onclick=e=>{if(e.target.id==="logSheet")$("logSheet").classList.remove("open")};
 $("logList").onclick=e=>{const b=e.target.closest("button[data-t]");if(!b)return;
@@ -717,8 +737,9 @@ function stopAll(){running=false;keepAwake(false);try{speechSynthesis.cancel()}c
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let delArm=false;
 $("seg").onclick=e=>{const m=e.target.dataset.m;if(!m||m===menuKey)return;
-  if(m==="new"){let n=1;while(customs.some(c=>c.key==="c"+n||c.name==="個別"+n))n++;
-    customs.push({key:"c"+n,name:"個別"+n,items:CUSTOM_DEFAULT.map(id=>({id,work:20,rest:5}))});menuKey="c"+n}
+  if(m==="new"){let n=1;while(customs.some(c=>c.name==="個別"+n))n++;
+    const key="c"+Date.now().toString(36);   // 削除後も番号を使い回さない
+    customs.push({key,name:"個別"+n,items:CUSTOM_DEFAULT.map(id=>({id,work:20,rest:5}))});menuKey=key}
   else menuKey=m;
   stopAll();menuInit();saveOpts();build()};
 $("cusName").onchange=e=>{const c=curCustom();if(!c)return;c.name=e.target.value.trim()||c.name;menuInit();saveOpts()};
@@ -762,7 +783,7 @@ $("mchip").onclick=()=>$("sheet").classList.add("open");
 $("btnGear").onclick=()=>$("sheet").classList.add("open");
 $("btnClose").onclick=()=>$("sheet").classList.remove("open");
 $("sheet").onclick=e=>{if(e.target.id==="sheet")$("sheet").classList.remove("open")};
-loadOpts();menuInit();build();requestAnimationFrame(tick);
+loadOpts();migrateLog();menuInit();build();requestAnimationFrame(tick);
 </script>
 </body>
 </html>
