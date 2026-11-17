@@ -29,7 +29,10 @@ h1 small{color:var(--sub);font-weight:500;font-size:13px;margin-left:6px}
 svg.fig{width:100%;height:auto;display:block;margin:6px 0 2px;border-radius:12px}
 .next{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;border:1px dashed var(--line);border-radius:12px;font-size:14px;color:var(--sub)}
 .next b{color:var(--text)}
-.next svg{width:96px;flex:none;border-radius:8px}
+.nfw{width:96px;flex:none}
+.nfw svg,.nfw video{width:96px;display:block;border-radius:8px;aspect-ratio:16/9;object-fit:cover}
+video.fig{width:100%;height:auto;margin:6px 0 2px;border-radius:12px;aspect-ratio:16/9;object-fit:cover;background:#ddd}
+.figwrap video,.nfw video{display:none}
 .total{color:var(--sub);font-size:13px;margin-top:8px;text-align:right}
 .ctrl{display:flex;gap:10px;margin:14px 0}
 button{font:inherit;border:0;border-radius:14px;padding:16px 10px;font-size:18px;font-weight:800;cursor:pointer;color:#101318;background:var(--work)}
@@ -65,9 +68,9 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   </div>
   <span class="phase" id="phase">スタート待ち</span>
   <div class="name" id="name"></div>
-  <svg class="fig" id="fig" viewBox="0 0 200 112"></svg>
+  <div class="figwrap"><svg class="fig" id="fig" viewBox="0 0 200 112"></svg><video class="fig" id="vid" muted loop playsinline preload="auto"></video></div>
   <p class="tip" id="tip"></p>
-  <div class="next" id="nextBox"><svg id="nextFig" viewBox="0 0 200 112"></svg><div>NEXT<br><b id="nextName"></b></div></div>
+  <div class="next" id="nextBox"><div class="nfw"><svg id="nextFig" viewBox="0 0 200 112"></svg><video id="nvid" muted loop playsinline preload="auto"></video></div><div>NEXT<br><b id="nextName"></b></div></div>
   <div class="total" id="total"></div>
 </section>
 
@@ -108,7 +111,7 @@ const EX = [
  {name:"バイシクルクランチ", tip:"手を頭の後ろに。自転車をこぐように膝を交互に胸へ引き寄せ、反対側のひじを近づける。", sp:0.75,
   A:{...SUP,torso:200,neck:212,face:-58,hand:[30,70],elbowHint:[0.4,-1],ankle:[118,66],foot:20,ankle2:[166,70],foot2:-5},
   B:{...SUP,torso:198,neck:210,face:-60,hand:[30,70],elbowHint:[0.4,-1],ankle:[166,70],foot:-5,ankle2:[118,66],foot2:20}},
- {name:"レッグレイズ", tip:"仰向けで両脚をそろえて上げ下げ。腰が浮くなら膝を少し曲げてもOK。下げきらずに止める。", sp:0.45,
+ {name:"レッグレイズ", video:"video/4.mp4", tip:"仰向けで両脚をそろえて上げ下げ。腰が浮くなら膝を少し曲げてもOK。下げきらずに止める。", sp:0.45,
   A:{...SUP,ankle:[111,19.5],foot:-75},
   B:{...SUP,ankle:[170,80],foot:-5}},
  {name:"ニーイン・ニーアウト", tip:"ひじをついて上体を起こし、膝を胸に引き寄せてから脚を伸ばす。足は床につけない。", sp:0.7,
@@ -320,11 +323,21 @@ function render(full){
   let skip=p.type==="work"?0:1,nx=null;
   for(let j=idx+1;j<phases.length;j++){if(phases[j].type==="work"){if(skip){skip--;continue}nx=phases[j];break}}
   if(finished||!nx){$("nextBox").style.display="none"}else{$("nextBox").style.display="flex";$("nextName").textContent=EX[nx.ex].name;drawFig(nfig,EX[nx.ex],.5)}
+  showMedia($("fig"),$("vid"),finished?EX[EX.length-1]:ex,running&&p.type==="work"&&!finished);
+  if(nx)showMedia($("nextFig"),$("nvid"),EX[nx.ex],true);
   $("btnStart").textContent=finished?"もう一度":running?"一時停止":(idx===0&&remain===p.dur?"スタート":"再開");
   // menu
   [...$("menu").children].forEach((li,i)=>{
     li.className=finished?"fin":(p.type==="work"&&i===p.ex?"now":(i<p.ex||(p.type!=="work"&&i<p.ex))?"fin":"");
   });
+}
+// 実写動画がある種目は動画、無い種目は人体モデルを表示
+function showMedia(svg,vid,ex,play){
+  if(ex.video){
+    svg.style.display="none";vid.style.display="block";
+    if(vid.getAttribute("src")!==ex.video){vid.setAttribute("src",ex.video);vid.load()}
+    if(play){const r=vid.play();if(r&&r.catch)r.catch(()=>{})}else vid.pause();
+  }else{svg.style.display="block";vid.style.display="none";vid.pause()}
 }
 function menuInit(){
   $("menu").innerHTML=EX.map((e,i)=>`<li><div class="no">${i+1}</div><div><b>${e.name}</b><span>${e.tip}</span></div></li>`).join("");
