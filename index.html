@@ -95,7 +95,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .danger{color:#ff8787;font-weight:700;padding:8px 6px;white-space:nowrap}
 .seg button{flex:1 0 auto;padding:10px 12px;border-radius:9px;font-weight:800;font-size:13.5px;white-space:nowrap;color:var(--sub)}
 .seg button.on{background:var(--work);color:#101318}
-.mchip{font-size:14px;font-weight:700;color:var(--sub);background:#1c222b;border-radius:999px;padding:5px 14px;margin-bottom:6px}
+.mchip{font:inherit;font-size:15px;font-weight:700;color:var(--text);background:#1c222b url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 10 6%27%3E%3Cpath d=%27M0 0h10L5 6z%27 fill=%27%239aa6b4%27/%3E%3C/svg%3E") no-repeat right 12px center/10px;border:1px solid #2a313c;border-radius:999px;padding:6px 32px 6px 16px;margin-bottom:6px;-webkit-appearance:none;appearance:none;max-width:80vw}
 .ttl{display:flex;justify-content:space-between;align-items:center;gap:6px}
 .ed{display:flex;gap:4px}
 .ed button{width:32px;height:30px;border-radius:8px;background:#2a313c;font-size:15px}
@@ -164,7 +164,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
   </div>
   <div class="side">
     <div class="info">
-      <button class="mchip" id="mchip"></button>
+      <select class="mchip" id="mchip" aria-label="メニュー"></select>
       <div class="sec" id="sec">20</div>
       <div class="name" id="name"></div>
       <div class="next" id="nextBox"><div class="nfw"><svg id="nextFig" viewBox="0 0 200 112"></svg><video id="nvid" muted loop playsinline preload="auto"></video></div><div>NEXT<br><b id="nextName"></b></div></div>
@@ -673,7 +673,7 @@ function menuInit(){
   const on=$("seg").querySelector(".on");if(on)on.scrollIntoView({inline:"nearest",block:"nearest"});
   $("cusRow").style.display=cus?"":"none";
   if(cus){$("cusName").value=curCustom().name;$("cusDel").textContent="削除";delArm=false}
-  $("mchip").textContent=menuName(menuKey)+" ▾";
+  $("mchip").innerHTML=[...Object.keys(MENUS),...customs.map(c=>c.key)].map(k=>`<option value="${k}"${k===menuKey?" selected":""}>${esc(menuName(k))}</option>`).join("");
   $("addRow").style.display=cus?"":"none";
   $("menu").innerHTML=EX.map((e,i)=>{
     const last=i===EX.length-1;
@@ -786,7 +786,7 @@ $("menu").addEventListener("click",e=>{const b=e.target.closest("button[data-act
   else if(b.dataset.act==="down"&&i<l.length-1)[l[i+1],l[i]]=[l[i],l[i+1]];
   else if(b.dataset.act==="del"&&l.length>1)l.splice(i,1);
   stopAll();menuInit();saveOpts();build()});
-$("mchip").onclick=()=>$("sheet").classList.add("open");
+$("mchip").onchange=e=>{const m=e.target.value;if(m===menuKey)return;stopAll();menuKey=m;menuInit();saveOpts();build()};
 $("btnGear").onclick=()=>$("sheet").classList.add("open");
 $("btnClose").onclick=()=>$("sheet").classList.remove("open");
 $("sheet").onclick=e=>{if(e.target.id==="sheet")$("sheet").classList.remove("open")};
