@@ -172,7 +172,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <div class="row" id="cusRow"><input id="cusName" maxlength="12" aria-label="プラン名"><button id="cusDel" class="danger">削除</button></div>
     <div class="row">全種目の時間をまとめて変更<select id="optWork"></select></div>
     <div class="row">全種目の休憩をまとめて変更<select id="optRest"></select></div>
-    <div class="row">開始前の準備（秒）<select id="optPrep"><option>3</option><option selected>5</option><option>10</option></select></div>
+    <div class="row">開始前の準備（秒）<select id="optPrep"><option>5</option><option selected>10</option><option>15</option></select></div>
     <div class="row">セット数<select id="optSets"><option selected>1</option><option>2</option><option>3</option></select></div>
     <div class="row">セット間の休憩（秒）<select id="optSetRest"><option>30</option><option selected>60</option><option>90</option></select></div>
     <div class="row">音声ガイド<input type="checkbox" id="optVoice" checked></div>
@@ -414,9 +414,9 @@ if(o.lists)for(const k in MENUS){const l=clean(o.lists[k]);if(!l)continue;const 
   lists[k]=MENUS[k].ids.map(id=>{const j=pool.findIndex(x=>x.id===id);return j>=0?pool.splice(j,1)[0]:{id,work:MENUS[k].work||20,rest:0}})}
 if(Array.isArray(o.customs)){const c=o.customs.map(c=>({key:String(c.key),name:String(c.name||"個別"),items:clean(c.items)})).filter(c=>c.items&&isCustom(c.key));if(c.length)customs=c}
 else if(o.lists&&clean(o.lists.custom))customs[0].items=clean(o.lists.custom);
-if(o.menu==="custom")o.menu="c1";if(o.voice){voicePref=o.voice;if(voices.some(v=>v.voiceURI===o.voice))$("optVoiceName").value=o.voice}
+if(o.menu==="custom")o.menu="c1";if(!o.cd&&(o.optPrep==="5"||o.optPrep==="3"))o.optPrep="10";if(o.voice){voicePref=o.voice;if(voices.some(v=>v.voiceURI===o.voice))$("optVoiceName").value=o.voice}
 if(MENUS[o.menu]||customs.some(c=>c.key===o.menu))menuKey=o.menu;optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
-function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.lists=lists;o.customs=customs;o.menu=menuKey;o.voice=$("optVoiceName").value;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
+function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.cd=1;o.lists=lists;o.customs=customs;o.menu=menuKey;o.voice=$("optVoiceName").value;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
 const opt=()=>({prep:+$("optPrep").value,sets:+$("optSets").value,setRest:+$("optSetRest").value,voice:$("optVoice").checked,beep:$("optBeep").checked});
 
 // ---- フェーズ構築 ----
@@ -536,6 +536,15 @@ $("bkRestore").onclick=()=>{try{const o=JSON.parse($("bkText").value);if(!o||!Ar
   if(o.opts){localStorage.setItem("abs2min",JSON.stringify(o.opts));loadOpts();stopAll();menuInit();build()}
   $("bkMsg").textContent="復元しました";$("bkText").value="";renderLog()}catch(e){$("bkMsg").textContent="読み取れませんでした"}};
 let lastShown=-1,lastNow=0,doneSec=0;
+// カウントダウン：運動は時間に応じてラスト3/5（40秒以上は「あと10秒」も）、準備・休憩は5または3
+function countN(p){if(p.type==="work")return p.dur<=15?3:5;return p.dur>=8?5:p.dur>=6?3:0}
+function cue(s){
+  const p=phases[idx];if(!p||s<=0)return;
+  const n=countN(p),voice=opt().voice&&"speechSynthesis" in window;
+  if(!voice){if(s<=3)beep(880,.12);return}
+  if(p.type==="work"&&p.dur>=40&&s===10){say("あと10秒");return}
+  if(s<=n&&s<p.dur)say(p.type==="work"&&s===n?`ラスト${n}`:String(s));
+}
 function tick(now){
   const dt=Math.min(.5,(now-lastNow)/1000);lastNow=now;
   if(running&&phases[idx]&&phases[idx].type==="work")doneSec+=dt;
@@ -543,7 +552,7 @@ function tick(now){
     const left=Math.max(0,(endAt-now)/1000);
     remain=left;
     const s=Math.ceil(left);
-    if(s!==lastShown){lastShown=s;if(s<=3&&s>0)beep(880,.12)}
+    if(s!==lastShown){lastShown=s;cue(s)}
     if(left<=0)nextPhase();
     render(false);
   }
