@@ -23,8 +23,6 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
 .ov{position:absolute;top:8px;left:8px;display:flex;gap:6px;align-items:center;pointer-events:none}
 .pill{padding:3px 10px;border-radius:999px;font-size:13px;font-weight:800;background:rgba(0,0,0,.55);color:#fff}
 .pill.ph{background:var(--accent);color:#101318}
-#btnGear{position:absolute;top:6px;right:6px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
-#btnGear svg{width:22px;height:22px;fill:#fff}
 .bar{position:relative;height:6px;background:#2b333e;transition:height .15s}
 #seek{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);width:100%;height:36px;margin:0;opacity:0;pointer-events:none;-webkit-appearance:none;appearance:none;background:transparent}
 .seekable .bar{height:12px}
@@ -45,7 +43,15 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
 .nfw>video{display:none}
 /* ボタン */
 .side{display:contents}
-.ctrl{display:flex;justify-content:center;align-items:center;gap:18px;padding:10px 0 18px;flex:none}
+.ctrl{display:flex;justify-content:center;align-items:center;gap:18px;padding:10px 0 12px;flex:none}
+.tabbar{display:flex;flex:none;border-top:1px solid #222a34;padding:2px 0 4px}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;color:var(--sub);font-size:11.5px}
+.tabbar svg{width:22px;height:22px;fill:var(--sub)}
+.mplist{display:flex;flex-direction:column;gap:10px;padding:4px 0 10px}
+.mplist button{display:flex;justify-content:space-between;align-items:center;padding:18px 16px;border-radius:14px;background:#12161c;font-size:18px;text-align:left}
+.mplist button span{font-size:13px;color:var(--sub)}
+.mplist button.on{background:#16303a;outline:2px solid var(--work)}
+.mplist button.on b{color:var(--work)}
 .ctrl button{display:grid;place-items:center;border-radius:50%}
 .ctrl .s{width:60px;height:60px;background:#232a34}
 .ctrl .m{width:84px;height:84px;background:var(--accent)}
@@ -59,11 +65,12 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
   .figwrap{flex:1;aspect-ratio:auto}
   .side{width:min(300px,36vw);display:flex;flex-direction:column;padding:4px 0}
   .info{padding:4px 8px;min-height:0;overflow:hidden}
-  .mchip{display:none}
+
   .sec{font-size:min(68px,20vh)}.name{font-size:17px;margin-top:2px}
   .next{margin-top:8px;font-size:12px}.next b{font-size:13px}
   .nfw{width:64px}
-  .ctrl{gap:8px;padding:4px 0 8px}
+  .ctrl{gap:8px;padding:4px 0 4px}
+  .tabbar button{padding:3px 0;font-size:10.5px}.tabbar svg{width:18px;height:18px}
   .ctrl .s{width:44px;height:44px}.ctrl .m{width:58px;height:58px}
   .ctrl svg{width:22px;height:22px}.ctrl .m svg{width:30px;height:30px}
 }
@@ -95,7 +102,8 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .danger{color:#ff8787;font-weight:700;padding:8px 6px;white-space:nowrap}
 .seg button{flex:1 0 auto;padding:10px 12px;border-radius:9px;font-weight:800;font-size:13.5px;white-space:nowrap;color:var(--sub)}
 .seg button.on{background:var(--work);color:#101318}
-.mchip{font:inherit;font-size:15px;font-weight:700;color:var(--text);background:#1c222b url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 10 6%27%3E%3Cpath d=%27M0 0h10L5 6z%27 fill=%27%239aa6b4%27/%3E%3C/svg%3E") no-repeat right 12px center/10px;border:1px solid #2a313c;border-radius:999px;padding:6px 32px 6px 16px;margin-bottom:6px;-webkit-appearance:none;appearance:none;max-width:80vw}
+.mchip{display:inline-flex;align-items:center;gap:10px;font-size:16px;font-weight:700;color:var(--text);background:#1c222b;border:1px solid #2a313c;border-radius:999px;padding:10px 20px;margin-bottom:6px;min-height:44px}
+.mchip svg{width:11px;height:7px;fill:var(--sub)}
 .ttl{display:flex;justify-content:space-between;align-items:center;gap:6px}
 .ed{display:flex;gap:4px}
 .ed button{width:32px;height:30px;border-radius:8px;background:#2a313c;font-size:15px}
@@ -159,12 +167,11 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
   <div class="media">
     <div class="figwrap"><svg id="fig" viewBox="0 0 200 112"></svg><video id="vid" muted loop playsinline preload="auto"></video></div>
     <div class="ov"><span class="pill" id="count">1/6</span><span class="pill ph" id="phase">スタート待ち</span></div>
-    <button id="btnGear" aria-label="設定"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L14.9 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.4 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.9h4l.4-2.9c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM12.9 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></button>
     <div class="bar"><i id="bar"></i><input type="range" id="seek" min="0" max="1000" value="0" aria-label="時間を調整"></div>
   </div>
   <div class="side">
     <div class="info">
-      <select class="mchip" id="mchip" aria-label="メニュー"></select>
+      <button class="mchip" id="mchip" aria-label="メニューを選ぶ"></button>
       <div class="sec" id="sec">20</div>
       <div class="name" id="name"></div>
       <div class="next" id="nextBox"><div class="nfw"><svg id="nextFig" viewBox="0 0 200 112"></svg><video id="nvid" muted loop playsinline preload="auto"></video></div><div>NEXT<br><b id="nextName"></b></div></div>
@@ -175,6 +182,14 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
       <button class="m" id="btnStart" aria-label="スタート"></button>
       <button class="s" id="btnSkip" aria-label="次へ"><svg viewBox="0 0 24 24"><path d="M5 5l9 7-9 7zM16 5h3v14h-3z"/></svg></button>
     </div>
+    <nav class="tabbar"><button id="tbSet"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L14.9 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.4 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.9h4l.4-2.9c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM12.9 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg><span>設定</span></button><button id="tbLog"><svg viewBox="0 0 24 24"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v11H5zm2 2v2h2v-2zm4 0v2h2v-2zm4 0v2h2v-2zm-8 4v2h2v-2zm4 0v2h2v-2z"/></svg><span>記録</span></button></nav>
+  </div>
+</div>
+
+<div class="sheet" id="mpick">
+  <div class="panel">
+    <div class="ph2"><b>メニューを選ぶ</b><button id="mpClose">閉じる</button></div>
+    <div class="mplist" id="mpList"></div>
   </div>
 </div>
 
@@ -673,7 +688,7 @@ function menuInit(){
   const on=$("seg").querySelector(".on");if(on)on.scrollIntoView({inline:"nearest",block:"nearest"});
   $("cusRow").style.display=cus?"":"none";
   if(cus){$("cusName").value=curCustom().name;$("cusDel").textContent="削除";delArm=false}
-  $("mchip").innerHTML=[...Object.keys(MENUS),...customs.map(c=>c.key)].map(k=>`<option value="${k}"${k===menuKey?" selected":""}>${esc(menuName(k))}</option>`).join("");
+  $("mchip").innerHTML=`<span>${esc(menuName(menuKey))}</span><svg viewBox="0 0 10 6"><path d="M0 0h10L5 6z"/></svg>`;
   $("addRow").style.display=cus?"":"none";
   $("menu").innerHTML=EX.map((e,i)=>{
     const last=i===EX.length-1;
@@ -786,8 +801,20 @@ $("menu").addEventListener("click",e=>{const b=e.target.closest("button[data-act
   else if(b.dataset.act==="down"&&i<l.length-1)[l[i+1],l[i]]=[l[i],l[i+1]];
   else if(b.dataset.act==="del"&&l.length>1)l.splice(i,1);
   stopAll();menuInit();saveOpts();build()});
-$("mchip").onchange=e=>{const m=e.target.value;if(m===menuKey)return;stopAll();menuKey=m;menuInit();saveOpts();build()};
-$("btnGear").onclick=()=>$("sheet").classList.add("open");
+// メニュー選択（大きなボタンの一覧）
+function openMpick(){
+  $("mpList").innerHTML=[...Object.keys(MENUS),...customs.map(c=>c.key)].map(k=>{
+    const l=MENUS[k]?lists[k]:customs.find(c=>c.key===k).items,sec=l.reduce((a,x,i)=>a+x.work+(i<l.length-1?x.rest:0),0);
+    return `<button data-m="${k}" class="${k===menuKey?"on":""}"><b>${esc(menuName(k))}</b><span>${l.length}種目・約${Math.floor(sec/60)}分${sec%60?sec%60+"秒":""}</span></button>`}).join("");
+  $("mpick").classList.add("open");
+}
+$("mchip").onclick=openMpick;
+$("mpick").onclick=e=>{if(e.target.id==="mpick"||e.target.id==="mpClose")return $("mpick").classList.remove("open");
+  const b=e.target.closest("button[data-m]");if(!b)return;$("mpick").classList.remove("open");
+  const m=b.dataset.m;if(m===menuKey)return;stopAll();menuKey=m;menuInit();saveOpts();build()};
+const openSet=()=>$("sheet").classList.add("open");
+$("tbSet").onclick=openSet;
+$("tbLog").onclick=()=>{renderLog();$("logSheet").classList.add("open")};
 $("btnClose").onclick=()=>$("sheet").classList.remove("open");
 $("sheet").onclick=e=>{if(e.target.id==="sheet")$("sheet").classList.remove("open")};
 loadOpts();migrateLog();menuInit();build();requestAnimationFrame(tick);
