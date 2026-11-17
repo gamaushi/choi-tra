@@ -292,11 +292,11 @@ Object.assign(LIB,{
 const NAR={"plank": ["ひじは肩の真下に", "お尻をゆっくり上げて、下ろす", "下ろしたとき、腰を反らさない"], "revcrunch": ["脚を天井に向けて", "お尻を少し浮かせて、足を真上へ", "反動を使わず、ゆっくり下ろす"], "bicycle": ["手は頭の後ろに", "ひじと反対の膝を近づけて", "肩は床から浮かせたまま"], "legraise": ["両脚をそろえて", "腰を床に押しつけて", "下ろしきらずに止める"], "kneein": ["ひじをついて上体を起こす", "膝を胸に引き寄せて", "脚を伸ばす。足は床につけない"], "leghold": ["脚を少し浮かせてキープ", "お腹に力を入れて", "呼吸は止めないで"], "squat": ["足は肩幅に", "お尻を後ろに引いて", "膝はつま先と同じ向きに"], "stepjack": ["足を横に一歩", "手を頭の上へ", "リズムよく続けて"], "lunge": ["片足を大きく後ろへ", "前の膝を出しすぎない", "前足で床を押して戻る"], "climber": ["腕立ての姿勢で", "膝を交互に胸へ", "お尻を上げすぎない"], "row": ["膝を軽く曲げて前に倒す", "おへそに向けて引き上げる", "背中は丸めない"], "burpee": ["しゃがんで手を床に", "足を後ろへ伸ばす", "戻して立つ。跳ばなくてOK"], "plankhold": ["ひじは肩の真下に", "頭からかかとまで一直線", "お尻を上げすぎない"], "sideL": ["左ひじは肩の真下に", "体を一直線に", "きつければ膝をついてOK"], "sideR": ["右ひじは肩の真下に", "体を一直線に", "きつければ膝をついてOK"], "revplank": ["手は肩の真下に", "お尻を持ち上げる", "肩からかかとまで一直線"], "cobra": ["手を胸の横に", "ゆっくり上体を起こす", "お腹を伸ばして深呼吸"]};
 const MENUS={abs:{name:"腹筋2分",ids:["plank","revcrunch","bicycle","legraise","kneein","leghold"]},
  burn:{name:"脂肪燃焼2分",ids:["squat","stepjack","lunge","climber","row","burpee"]},
- core:{name:"体幹2分",ids:["plankhold","sideL","sideR","revplank","cobra"],work:24}};
+ core:{name:"体幹",old:["体幹2分"],ids:["plankhold","sideL","sideR","revplank","cobra"],work:30,rest:15}};
 const CUSTOM_DEFAULT=["squat","plank","climber","legraise"];
 const ABS_IDS=MENUS.abs.ids, BURN_IDS=MENUS.burn.ids, CORE_IDS=MENUS.core.ids;
 let menuKey="abs";
-let lists={};for(const k in MENUS)lists[k]=MENUS[k].ids.map(id=>({id,work:MENUS[k].work||20,rest:5}));
+let lists={};for(const k in MENUS)lists[k]=MENUS[k].ids.map(id=>({id,work:MENUS[k].work||20,rest:MENUS[k].rest??5}));
 // 個別プラン（複数）: {key:"c1",name:"個別1",items:[{id,work,rest}]}
 let customs=[{key:"c1",name:"個別1",items:CUSTOM_DEFAULT.map(id=>({id,work:20,rest:5}))}];
 const isCustom=k=>k[0]==="c"&&!MENUS[k];
@@ -425,13 +425,13 @@ function loadOpts(){try{const o=JSON.parse(localStorage.getItem("abs2min")||"{}"
 const clean=l=>Array.isArray(l)&&l.length&&l.every(x=>LIB[x.id])?l.map(x=>({id:x.id,work:+x.work||20,rest:+x.rest||0})):null;
 // プリセットは種目と順番を固定し、保存されている時間・休憩だけ引き継ぐ
 if(o.lists)for(const k in MENUS){const l=clean(o.lists[k]);if(!l)continue;const pool=[...l];
-  lists[k]=MENUS[k].ids.map(id=>{const j=pool.findIndex(x=>x.id===id);return j>=0?pool.splice(j,1)[0]:{id,work:MENUS[k].work||20,rest:5}})}
+  lists[k]=MENUS[k].ids.map(id=>{const j=pool.findIndex(x=>x.id===id);return j>=0?pool.splice(j,1)[0]:{id,work:MENUS[k].work||20,rest:MENUS[k].rest??5}})}
 if(Array.isArray(o.customs)){const c=o.customs.map(c=>({key:String(c.key),name:String(c.name||"個別"),items:clean(c.items)})).filter(c=>c.items&&isCustom(c.key));if(c.length)customs=c}
 else if(o.lists&&clean(o.lists.custom))customs[0].items=clean(o.lists.custom);
 if(o.menu==="custom")o.menu="c1";
 const r5=l=>{if(!o.r5&&l.every(x=>x.rest===0))l.forEach(x=>x.rest=5)};if(!o.cd&&(o.optPrep==="5"||o.optPrep==="3"))o.optPrep="10";if(o.voice){voicePref=o.voice;if(voices.some(v=>v.voiceURI===o.voice))$("optVoiceName").value=o.voice}
-if(MENUS[o.menu]||customs.some(c=>c.key===o.menu))menuKey=o.menu;for(const k in lists)r5(lists[k]);customs.forEach(c=>r5(c.items));optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
-function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.cd=1;o.r5=1;o.lists=lists;o.customs=customs;o.menu=menuKey;o.voice=$("optVoiceName").value;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
+if(MENUS[o.menu]||customs.some(c=>c.key===o.menu))menuKey=o.menu;for(const k in lists)r5(lists[k]);customs.forEach(c=>r5(c.items));if(!o.c30)lists.core.forEach(it=>{it.work=30;it.rest=15});optIds.forEach(id=>{if(o[id]!==undefined){const el=$(id);el.type==="checkbox"?el.checked=o[id]:el.value=o[id]}})}catch(e){}}
+function saveOpts(){try{const o={};optIds.forEach(id=>{const el=$(id);o[id]=el.type==="checkbox"?el.checked:el.value});o.cd=1;o.r5=1;o.c30=1;o.lists=lists;o.customs=customs;o.menu=menuKey;o.voice=$("optVoiceName").value;localStorage.setItem("abs2min",JSON.stringify(o))}catch(e){}}
 const opt=()=>({prep:+$("optPrep").value,sets:+$("optSets").value,setRest:+$("optSetRest").value,voice:$("optVoice").checked,beep:$("optBeep").checked});
 
 // ---- フェーズ構築 ----
@@ -522,7 +522,7 @@ const fmtSec=s=>s>=60?`${Math.floor(s/60)}分${s%60?s%60+"秒":""}`:`${s}秒`;
 let logSel="all";
 function logKey(r){
   if(r.key)return r.key;
-  for(const k in MENUS)if(MENUS[k].name===r.plan)return k;
+  for(const k in MENUS)if(MENUS[k].name===r.plan||(MENUS[k].old||[]).includes(r.plan))return k;
   const c=customs.find(c=>c.name===r.plan);return c?c.key:"name:"+r.plan;
 }
 // 番号の無い古い記録に、今のプラン名からプラン番号を付けておく（以後は改名しても同じプランとして集計）
