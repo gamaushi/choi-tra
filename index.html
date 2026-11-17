@@ -105,6 +105,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 .cal .d.f{opacity:.25}
 .lday{font-size:13px;color:var(--sub);margin:12px 0 4px}
 .lrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.lrow.new{background:#16303a;border-radius:8px;padding-left:6px}
 .lrow .tm{color:var(--sub);font-variant-numeric:tabular-nums}
 .lrow .pl{flex:1}
 .lrow .du{color:var(--sub);font-size:13px}
@@ -188,7 +189,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 </div>
 <div class="sheet" id="logSheet">
   <div class="panel">
-    <div class="ph2"><b>記録</b><button id="logClose">閉じる</button></div>
+    <div class="ph2"><b id="logTitle">記録</b><button id="logClose">閉じる</button></div>
     <div class="stats" id="stats"></div>
     <div class="cal" id="cal"></div>
     <h2>履歴</h2>
@@ -489,6 +490,7 @@ function finish(){
   const planned=phases.filter(p=>p.type==="work").reduce((a,p)=>a+p.dur,0);
   recorded=doneSec>=planned*0.5;
   if(recorded)addLog({t:Date.now(),plan:menuName(menuKey),sec:Math.round(doneSec),sets:opt().sets});
+  if(recorded)setTimeout(()=>{if(finished){$("sheet").classList.remove("open");renderLog(true);$("logSheet").classList.add("open")}},1500);
   render(true);
 }
 // ---- 記録 ----
@@ -500,7 +502,7 @@ function addLog(r){const l=getLog();l.push(r);setLog(l)}
 const dkey=d=>`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
 const WD="日月火水木金土";
 const fmtSec=s=>s>=60?`${Math.floor(s/60)}分${s%60?s%60+"秒":""}`:`${s}秒`;
-function renderLog(){
+function renderLog(justDone){
   const l=getLog().sort((a,b)=>b.t-a.t),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   const days=new Set(l.map(r=>dkey(new Date(r.t))));
   const mon=new Date(today);mon.setDate(today.getDate()-((today.getDay()+6)%7));
@@ -517,7 +519,8 @@ function renderLog(){
   let out="",last="";
   l.forEach(r=>{const x=new Date(r.t),k=dkey(x);
     if(k!==last){out+=`<div class="lday">${x.getMonth()+1}/${x.getDate()}（${WD[x.getDay()]}）</div>`;last=k}
-    out+=`<div class="lrow"><span class="tm">${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}</span><span class="pl">${esc(r.plan)}${r.sets>1?` ×${r.sets}セット`:""}</span><span class="du">${fmtSec(r.sec)}</span><button data-t="${r.t}" aria-label="削除">✕</button></div>`});
+    out+=`<div class="lrow${justDone&&r===l[0]?" new":""}"><span class="tm">${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}</span><span class="pl">${esc(r.plan)}${r.sets>1?` ×${r.sets}セット`:""}</span><span class="du">${fmtSec(r.sec)}</span><button data-t="${r.t}" aria-label="削除">✕</button></div>`});
+  $("logTitle").textContent=justDone?"お疲れさまでした！":"記録";
   $("logList").innerHTML=out||'<p class="note">まだ記録はありません。メニューを最後までやると自動で記録されます。</p>';
 }
 $("btnLog").onclick=()=>{$("sheet").classList.remove("open");renderLog();$("logSheet").classList.add("open")};
