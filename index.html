@@ -178,7 +178,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
     <div class="row">セット数<select id="optSets"><option selected>1</option><option>2</option><option>3</option></select></div>
     <div class="row">セット間の休憩（秒）<select id="optSetRest"><option>30</option><option selected>60</option><option>90</option></select></div>
     <div class="row">音声ガイド<input type="checkbox" id="optVoice" checked></div>
-    <div class="row">声<select id="optVoiceName" style="max-width:62%"></select></div>
+    <div class="row" id="voiceRow">声<select id="optVoiceName" style="max-width:62%"></select></div>
     <div class="row">話す速さ<select id="optRate"><option value="0.9">ゆっくり</option><option value="1.05" selected>ふつう</option><option value="1.2">はやめ</option></select></div>
     <div class="row" style="justify-content:flex-end"><button id="voiceTest" class="vtest">▶ 試しに聞く</button></div>
     <div class="row">ビープ音<input type="checkbox" id="optBeep" checked></div>
@@ -460,6 +460,7 @@ function loadVoices(){
   const sel=$("optVoiceName"),h=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   sel.innerHTML=voices.length?voices.map((v,i)=>`<option value="${h(v.voiceURI)}">${h(v.name.replace(/Microsoft |Google /,""))}${i===0?"（おすすめ）":""}</option>`).join(""):'<option value="">標準の声</option>';
   if(voicePref&&voices.some(v=>v.voiceURI===voicePref))sel.value=voicePref;
+  $("voiceRow").style.display=voices.length>1?"":"none";
 }
 if("speechSynthesis" in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;setTimeout(loadVoices,800)}
 function say(text){
