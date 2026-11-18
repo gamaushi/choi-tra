@@ -19,7 +19,13 @@ button{font:inherit;border:0;cursor:pointer;color:var(--text);background:none}
 .media{position:relative;width:100%;background:#000;flex:none}
 .figwrap{position:relative;width:100%;aspect-ratio:16/9}
 .figwrap>svg,.figwrap>video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
-.figwrap>video{display:none}
+.figwrap>video,.figwrap>img,.nfw>img{display:none}
+.figwrap>img,.nfw>img,.pth img,.lth img,.pvm img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.figwrap>img{object-fit:contain;background:#dcdfe3}
+.figwrap>img,.nfw>img{display:none}
+img.mir{--sx:-1;transform:scaleX(-1)}
+img.breath{animation:breath 4s ease-in-out infinite}
+@keyframes breath{0%,100%{transform:scaleX(var(--sx,1)) scale(1)}50%{transform:scaleX(var(--sx,1)) scale(1.03)}}
 .ov{position:absolute;top:8px;left:8px;display:flex;gap:6px;align-items:center;pointer-events:none}
 .pill{padding:3px 10px;border-radius:999px;font-size:13px;font-weight:800;background:rgba(0,0,0,.55);color:#fff}
 .pill.ph{background:var(--accent);color:#101318}
@@ -165,7 +171,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
 <body>
 <div id="app">
   <div class="media">
-    <div class="figwrap"><svg id="fig" viewBox="0 0 200 112"></svg><video id="vid" muted loop playsinline preload="auto"></video></div>
+    <div class="figwrap"><svg id="fig" viewBox="0 0 200 112"></svg><video id="vid" muted loop playsinline preload="auto"></video><img id="pic" alt=""></div>
     <div class="ov"><span class="pill" id="count">1/6</span><span class="pill ph" id="phase">スタート待ち</span></div>
     <div class="bar"><i id="bar"></i><input type="range" id="seek" min="0" max="1000" value="0" aria-label="時間を調整"></div>
   </div>
@@ -174,7 +180,7 @@ ol.menu span{font-size:13px;color:var(--sub);line-height:1.5}
       <button class="mchip" id="mchip" aria-label="メニューを選ぶ"></button>
       <div class="sec" id="sec">20</div>
       <div class="name" id="name"></div>
-      <div class="next" id="nextBox"><div class="nfw"><svg id="nextFig" viewBox="0 0 200 112"></svg><video id="nvid" muted loop playsinline preload="auto"></video></div><div>NEXT<br><b id="nextName"></b></div></div>
+      <div class="next" id="nextBox"><div class="nfw"><svg id="nextFig" viewBox="0 0 200 112"></svg><video id="nvid" muted loop playsinline preload="auto"></video><img id="npic" alt=""></div><div>NEXT<br><b id="nextName"></b></div></div>
     </div>
     <div class="ctrl">
       <button class="s" id="btnReset" aria-label="リセット"><svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg></button>
@@ -278,7 +284,7 @@ const LIB = {
  kneein:{name:"ニーイン・ニーアウト", tip:"ひじをついて上体を起こし、膝を胸に引き寄せてから脚を伸ばす。足は床につけない。", sp:0.7,
   A:{...PROP,ankle:[120,70],foot:25},
   B:{...PROP,ankle:[168,74],foot:-5}},
- leghold:{name:"レッグホールド", tip:"ひじをついて上体を起こし、脚を伸ばして床から少し浮かせたままキープ。息は止めない。", sp:0.5,
+ leghold:{img:"img/leghold.jpg", name:"レッグホールド", tip:"ひじをついて上体を起こし、脚を伸ばして床から少し浮かせたままキープ。息は止めない。", sp:0.5,
   A:{...PROP,ankle:[168,73],foot:-8},
   B:{...PROP,torso:205,ankle:[168,76],foot:-6}},
  squat:{name:"スクワット", tip:"足を肩幅に開き、お尻を後ろに引いて太ももが床と平行近くまで下げる。膝はつま先と同じ向きに。", sp:0.45, scale:.6,
@@ -299,15 +305,15 @@ const RP={hip:[102,67],torso:199.6,neck:202,face:-70,hand:[52,96],elbowHint:[-1,
 const SP={hip:[99,79],torso:190.4,neck:192,face:-60,hand:[52,22],elbowHint:[-1,0],hand2:[62,97],elbow2Hint:[-1,1],ankle:[170,92],foot:-10,kneeHint:[0,-1]};
 const CB={hip:[100,93],neck:232,face:200,hand:[60,96],elbowHint:[1,0],ankle:[172,94],foot:8,kneeHint:[0,1]};
 Object.assign(LIB,{
- plankhold:{name:"プランク", tip:"ひじとつま先で体を支え、頭からかかとまで一直線をキープ。お尻を上げすぎず、腰も反らさない。", sp:0.3,
+ plankhold:{img:"img/plankhold.jpg", name:"プランク", tip:"ひじとつま先で体を支え、頭からかかとまで一直線をキープ。お尻を上げすぎず、腰も反らさない。", sp:0.3,
   A:{...PL}, B:{...PL,hip:[101,74]}},
- revplank:{name:"リバースプランク", tip:"床に座って手を後ろにつき、お尻を持ち上げて肩からかかとまで一直線をキープ。手は肩の真下に。", sp:0.3,
+ revplank:{img:"img/revplank.jpg", name:"リバースプランク", tip:"床に座って手を後ろにつき、お尻を持ち上げて肩からかかとまで一直線をキープ。手は肩の真下に。", sp:0.3,
   A:{...RP}, B:{...RP,hip:[102,65.5]}},
- sideL:{name:"左サイドプランク", tip:"左ひじを肩の真下について横向きになり、体を一直線に持ち上げてキープ。きつければ膝をついてOK。", sp:0.3,
+ sideL:{img:"img/sideL.jpg", name:"左サイドプランク", tip:"左ひじを肩の真下について横向きになり、体を一直線に持ち上げてキープ。きつければ膝をついてOK。", sp:0.3,
   A:{...SP}, B:{...SP,hip:[99,77.5]}},
- sideR:{name:"右サイドプランク", tip:"右ひじを肩の真下について横向きになり、体を一直線に持ち上げてキープ。きつければ膝をついてOK。", sp:0.3, mirror:true,
+ sideR:{img:"img/sideL.jpg", name:"右サイドプランク", tip:"右ひじを肩の真下について横向きになり、体を一直線に持ち上げてキープ。きつければ膝をついてOK。", sp:0.3, mirror:true,
   A:{...SP}, B:{...SP,hip:[99,77.5]}},
- cobra:{name:"コブラストレッチ", tip:"うつ伏せで手を胸の横につき、腕を伸ばして上体を起こす。お腹を伸ばしてゆっくり呼吸。腰が痛ければ浅めに。", sp:0.18,
+ cobra:{img:"img/cobra.jpg", name:"コブラストレッチ", tip:"うつ伏せで手を胸の横につき、腕を伸ばして上体を起こす。お腹を伸ばしてゆっくり呼吸。腰が痛ければ浅めに。", sp:0.18,
   A:{...CB,torso:205}, B:{...CB,torso:213,neck:238}},
 });
 // 運動中のフォーム説明（ナレーション）
@@ -667,6 +673,13 @@ function render(full){
 }
 // 実写動画がある種目は動画、無い種目は人体モデルを表示
 function showMedia(svg,vid,ex,play){
+  const pic=vid.parentNode.querySelector("img");
+  if(ex.img){
+    svg.style.display="none";vid.style.display="none";vid.pause();pic.style.display="block";
+    if(pic.getAttribute("src")!==ex.img)pic.setAttribute("src",ex.img);
+    pic.classList.toggle("mir",!!ex.mirror);pic.classList.toggle("breath",!!play);return;
+  }
+  pic.style.display="none";
   if(ex.video){
     svg.style.display="none";vid.style.display="block";
     if(vid.getAttribute("src")!==ex.video){vid.setAttribute("src",ex.video);vid.load()}
@@ -702,6 +715,7 @@ function menuInit(){
 // サムネ・ポップアップ用：動画があれば動画、無ければ人体モデル
 let live=[];
 function mediaInto(el,ex,anim){
+  if(ex.img){el.insertAdjacentHTML("beforeend",`<img src="${ex.img}" alt="" class="${ex.mirror?"mir ":""}${anim?"breath":""}">`);return}
   if(ex.video){el.insertAdjacentHTML("beforeend",`<video src="${ex.video}" muted loop playsinline ${anim?"autoplay":'preload="metadata"'}></video>`);return}
   const sv=document.createElementNS(NS,"svg");sv.setAttribute("viewBox","0 0 200 112");el.appendChild(sv);
   const f=buildFig(sv);drawFig(f,ex,ex.K?0.25:0.6);if(anim)live.push({f,ex});
