@@ -269,7 +269,7 @@ const BP1={hip:[82,62],torso:-20,neck:-10,face:60,hand:[132,95],elbowHint:[0,-1]
 const BP2={hip:[83,56],torso:-12,neck:-12,face:80,hand:[132,95],elbowHint:[0,-1],ankle:[18,88],foot:110,kneeHint:[0,1]};
 // 種目ライブラリ（cat: abs=腹筋 / burn=脂肪燃焼。scale は立ち姿勢を画面に収める縮小率、K は3コマ以上の動き）
 const LIB = {
- plank:{name:"プランク・ヒップアップ", tip:"ひじとつま先で体を支え、お尻を上げ下げする。下げたときに腰を反らさない。", sp:0.7,
+ plank:{video:"video/plank.mp4", name:"プランク・ヒップアップ", tip:"ひじとつま先で体を支え、お尻を上げ下げする。下げたときに腰を反らさない。", sp:0.7,
   A:{hip:[101,75],torso:189,neck:192,face:100,hand:[25,95],elbowHint:[1,1],ankle:[171,89],foot:72,kneeHint:[0,1]},
   B:{hip:[103,50],torso:162,neck:178,face:95,hand:[25,95],elbowHint:[1,1],ankle:[166,88],foot:66,kneeHint:[0,1]}},
  revcrunch:{name:"リバースクランチ", tip:"仰向けで脚を天井に向け、お尻を少し浮かせて足を真上へ突き上げる。反動を使わない。", sp:0.8,
@@ -278,7 +278,7 @@ const LIB = {
  bicycle:{name:"バイシクルクランチ", tip:"手を頭の後ろに。自転車をこぐように膝を交互に胸へ引き寄せ、反対側のひじを近づける。", sp:0.75,
   A:{...SUP,torso:200,neck:212,face:-58,hand:[30,70],elbowHint:[0.4,-1],ankle:[118,66],foot:20,ankle2:[166,70],foot2:-5},
   B:{...SUP,torso:198,neck:210,face:-60,hand:[30,70],elbowHint:[0.4,-1],ankle:[166,70],foot:-5,ankle2:[118,66],foot2:20}},
- legraise:{name:"レッグレイズ", video:"video/4.mp4", tip:"仰向けで両脚をそろえて上げ下げ。腰が浮くなら膝を少し曲げてもOK。下げきらずに止める。", sp:0.45,
+ legraise:{name:"レッグレイズ", video:"video/legraise.mp4", tip:"仰向けで両脚をそろえて上げ下げ。腰が浮くなら膝を少し曲げてもOK。下げきらずに止める。", sp:0.45,
   A:{...SUP,ankle:[111,19.5],foot:-75},
   B:{...SUP,ankle:[170,80],foot:-5}},
  kneein:{name:"ニーイン・ニーアウト", tip:"ひじをついて上体を起こし、膝を胸に引き寄せてから脚を伸ばす。足は床につけない。", sp:0.7,
